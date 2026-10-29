@@ -124,3 +124,4 @@ export const ResultModal: React.FC<ResultModalProps> = ({
     </div>
   );
 };
+

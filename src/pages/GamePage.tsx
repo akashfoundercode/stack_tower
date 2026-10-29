@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { GameState, BetHistoryItem } from '../types/game';
-import { Header } from '../components/Header';
-import { GameScene } from '../components/GameScene';
-import { BettingPanel } from '../components/BettingPanel';
+import { MobileHeader } from '../components/MobileHeader';
+import { FullscreenGameScene } from '../components/FullscreenGameScene';
+import { MobileBettingOverlay } from '../components/MobileBettingOverlay';
 import { ResultModal } from '../components/ResultModal';
 import { HistoryModal } from '../components/HistoryModal';
 import { soundFx } from '../utils/sound';
@@ -26,12 +26,12 @@ export const GamePage: React.FC = () => {
   // Active Game State
   const [gameState, setGameState] = useState<GameState>('IDLE');
   const [selectedBet, setSelectedBet] = useState<number>(100);
-  const [activeBet, setActiveBet] = useState<number>(100); // Fixed bet for current running round
+  const [activeBet, setActiveBet] = useState<number>(100);
   const [currentLevel, setCurrentLevel] = useState<number>(0);
   const [currentMultiplier, setCurrentMultiplier] = useState<number>(1.0);
   const [, setScore] = useState<number>(0);
 
-  // Trigger from keyboard or UI button
+  // Trigger for build
   const [buildTrigger, setBuildTrigger] = useState<number>(0);
 
   // Modals
@@ -49,17 +49,16 @@ export const GamePage: React.FC = () => {
     finalMultiplier: 1.0,
   });
 
-  // Persist balance
+  // Storage sync
   useEffect(() => {
     localStorage.setItem('stack_tower_balance', demoBalance.toString());
   }, [demoBalance]);
 
-  // Persist history
   useEffect(() => {
     localStorage.setItem('stack_tower_history', JSON.stringify(history));
   }, [history]);
 
-  // Handle keyboard SPACEBAR to trigger BUILD
+  // Spacebar to build
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space' && gameState === 'PLAYING') {
@@ -71,12 +70,11 @@ export const GamePage: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [gameState]);
 
-  // START GAME: Deduct bet exactly once & initiate round
+  // START GAME
   const handleStartGame = () => {
     if (gameState === 'PLAYING') return;
     if (demoBalance < selectedBet) return;
 
-    // Deduct bet atomically
     setDemoBalance((prev) => prev - selectedBet);
     setActiveBet(selectedBet);
     setCurrentLevel(0);
@@ -86,14 +84,14 @@ export const GamePage: React.FC = () => {
     setGameState('PLAYING');
   };
 
-  // BUILD clicked from UI panel
+  // BUILD
   const handleBuild = () => {
     if (gameState === 'PLAYING') {
       setBuildTrigger((prev) => prev + 1);
     }
   };
 
-  // Block placement success
+  // Stack success
   const handleStackSuccess = useCallback(
     (level: number, multiplier: number, bonusPoints: number) => {
       setCurrentLevel(level);
@@ -103,12 +101,12 @@ export const GamePage: React.FC = () => {
     []
   );
 
-  // Perfect placement callback
+  // Perfect stack
   const handlePerfectStack = useCallback(() => {
     setScore((prev) => prev + 100);
   }, []);
 
-  // CASH OUT: Settle round as WIN atomically
+  // CASH OUT
   const handleCashOut = () => {
     if (gameState !== 'PLAYING') return;
 
@@ -116,10 +114,8 @@ export const GamePage: React.FC = () => {
     const finalPayout = Math.floor(activeBet * currentMultiplier * 100) / 100;
     const profit = finalPayout - activeBet;
 
-    // Credit balance
     setDemoBalance((prev) => prev + finalPayout);
 
-    // Save record
     const historyItem: BetHistoryItem = {
       id: `round-${Date.now()}`,
       timestamp: Date.now(),
@@ -144,7 +140,7 @@ export const GamePage: React.FC = () => {
     setShowResultModal(true);
   };
 
-  // GAME OVER: Missed block
+  // GAME OVER
   const handleGameOver = useCallback(
     (finalLevel: number, finalMult: number) => {
       if (gameState !== 'PLAYING') return;
@@ -190,20 +186,11 @@ export const GamePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center">
-      {/* Top Header */}
-      <Header
-        demoBalance={demoBalance}
-        onResetBalance={handleResetBalance}
-        soundEnabled={soundEnabled}
-        onToggleSound={handleToggleSound}
-        onOpenHistory={() => setShowHistoryModal(true)}
-      />
-
-      {/* Main Content Area */}
-      <main className="w-full max-w-md px-3 py-2 md:py-4 flex-1 flex flex-col justify-between gap-3">
-        {/* Game Scene */}
-        <GameScene
+    <div className="w-screen h-[100dvh] overflow-hidden bg-slate-950 flex justify-center items-center">
+      {/* Container: 100% full screen on phones, responsive frame on desktops */}
+      <div className="relative w-full h-full max-w-[430px] max-h-[920px] shadow-2xl md:rounded-3xl md:border-4 md:border-slate-800 overflow-hidden flex flex-col justify-between">
+        {/* Layer 1: Full-Screen Immersive Canvas Game Scene (The entire background) */}
+        <FullscreenGameScene
           gameState={gameState}
           onStackSuccess={handleStackSuccess}
           onGameOver={handleGameOver}
@@ -211,41 +198,51 @@ export const GamePage: React.FC = () => {
           buildTrigger={buildTrigger}
         />
 
-        {/* Bottom Betting Controls */}
-        <BettingPanel
-          gameState={gameState}
-          betAmount={selectedBet}
-          onBetChange={(amt) => setSelectedBet(amt)}
-          onStartGame={handleStartGame}
-          onBuild={handleBuild}
-          onCashOut={handleCashOut}
-          multiplier={currentMultiplier}
-          level={currentLevel}
+        {/* Layer 2: Floating Top Header Overlay (Balance, Currency, Top Up, Sound) */}
+        <MobileHeader
           demoBalance={demoBalance}
+          onResetBalance={handleResetBalance}
+          soundEnabled={soundEnabled}
+          onToggleSound={handleToggleSound}
+          onOpenHistory={() => setShowHistoryModal(true)}
         />
-      </main>
 
-      {/* Result Modal */}
-      <ResultModal
-        isOpen={showResultModal}
-        status={roundResult.status}
-        betAmount={activeBet}
-        multiplier={roundResult.finalMultiplier}
-        payout={roundResult.payout}
-        highestLevel={roundResult.highestLevel}
-        onPlayAgain={() => {
-          setShowResultModal(false);
-          setGameState('IDLE');
-        }}
-      />
+        {/* Layer 3: Bottom Betting Controls Overlay Floating directly over the game world */}
+        <div className="relative z-30 p-2.5 sm:p-3 pb-4 sm:pb-5">
+          <MobileBettingOverlay
+            gameState={gameState}
+            betAmount={selectedBet}
+            onBetChange={(amt) => setSelectedBet(amt)}
+            onStartGame={handleStartGame}
+            onBuild={handleBuild}
+            onCashOut={handleCashOut}
+            multiplier={currentMultiplier}
+            level={currentLevel}
+            demoBalance={demoBalance}
+          />
+        </div>
 
-      {/* Bet History Modal */}
-      <HistoryModal
-        isOpen={showHistoryModal}
-        history={history}
-        onClose={() => setShowHistoryModal(false)}
-        onClearHistory={handleClearHistory}
-      />
+        {/* Modals */}
+        <ResultModal
+          isOpen={showResultModal}
+          status={roundResult.status}
+          betAmount={activeBet}
+          multiplier={roundResult.finalMultiplier}
+          payout={roundResult.payout}
+          highestLevel={roundResult.highestLevel}
+          onPlayAgain={() => {
+            setShowResultModal(false);
+            setGameState('IDLE');
+          }}
+        />
+
+        <HistoryModal
+          isOpen={showHistoryModal}
+          history={history}
+          onClose={() => setShowHistoryModal(false)}
+          onClearHistory={handleClearHistory}
+        />
+      </div>
     </div>
   );
 };

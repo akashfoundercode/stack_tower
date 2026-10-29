@@ -57,3 +57,4 @@ export interface PlacementResult {
   cutSide: 'left' | 'right' | 'none';
   bonusPoints: number;
 }
+

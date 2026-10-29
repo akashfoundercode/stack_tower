@@ -80,3 +80,4 @@ export const MovingBlock: React.FC<MovingBlockProps> = ({
     </div>
   );
 };
+

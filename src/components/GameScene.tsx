@@ -349,3 +349,4 @@ export const GameScene: React.FC<GameSceneProps> = ({
     </div>
   );
 };
+

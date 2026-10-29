@@ -70,3 +70,4 @@ describe('Tower Stacking Physics & Mechanics', () => {
     expect(speedLevel20).toBeLessThanOrEqual(580); // Capped safe max speed
   });
 });
+

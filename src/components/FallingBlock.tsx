@@ -32,3 +32,4 @@ export const FallingBlock: React.FC<FallingBlockProps> = ({ debrisList }) => {
     </>
   );
 };
+
