@@ -86,7 +86,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
   const [winchY, setWinchY] = useState<number>(0);
   const [isLowering, setIsLowering] = useState<boolean>(false);
   const isLoweringRef = useRef<boolean>(false);
-  const winchAnimRef = useRef<number | null>(null);
+  const winchStartTimeRef = useRef<number | null>(null);
 
   // RAF references
   const animFrameRef = useRef<number | null>(null);
@@ -104,7 +104,6 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
 
   // Winch-down descent function: Crane hook lowers the straight obstacle into view from ceiling
   const startWinchDown = useCallback(() => {
-    if (winchAnimRef.current) cancelAnimationFrame(winchAnimRef.current);
     setIsLowering(true);
     isLoweringRef.current = true;
     setWinchY(-135);
@@ -113,30 +112,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
     setMovingX(0);
     movingXRef.current = 0;
     setHookX(0);
-
-    const winchStartTime = performance.now();
-    const WINCH_DURATION = 420; // ms smooth descent
-
-    const animateWinch = (now: number) => {
-      const elapsed = now - winchStartTime;
-      const progress = Math.min(1, elapsed / WINCH_DURATION);
-      // Smooth cubic ease-out deceleration:
-      const easeOut = 1 - Math.pow(1 - progress, 3);
-      const currentY = -135 + 135 * easeOut;
-      setWinchY(Math.round(currentY * 10) / 10);
-
-      if (progress < 1) {
-        winchAnimRef.current = requestAnimationFrame(animateWinch);
-      } else {
-        setWinchY(0);
-        setIsLowering(false);
-        isLoweringRef.current = false;
-        swingPhaseRef.current = 0;
-        lastTimeRef.current = performance.now();
-      }
-    };
-
-    winchAnimRef.current = requestAnimationFrame(animateWinch);
+    winchStartTimeRef.current = performance.now();
   }, []);
 
   // Reset when game starts
@@ -378,11 +354,8 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
         setIsDropping(false);
         setDropY(SWING_TOP);
 
-        // Next floor obstacle lowers down gracefully from the top crane!
-        setTimeout(() => {
-          isPlacingRef.current = false;
-          startWinchDown();
-        }, 360);
+        // Next floor obstacle lowers down gracefully from the top crane
+        startWinchDown();
       }
     };
 
@@ -408,12 +381,17 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
     }
   }, [buildTrigger, handleDropBlock]);
 
-  // RAF loop for pure pendulum swing around the stationary hook
+  // Master RAF loop for pendulum swing & crane winch descent
   useEffect(() => {
     if (gameState !== 'PLAYING') {
       if (animFrameRef.current) {
         cancelAnimationFrame(animFrameRef.current);
       }
+      winchStartTimeRef.current = null;
+      isLoweringRef.current = false;
+      setIsLowering(false);
+      isPlacingRef.current = false;
+      setWinchY(0);
       return;
     }
 
@@ -426,9 +404,30 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
       const delta = (timestamp - lastTimeRef.current) / 1000;
       lastTimeRef.current = timestamp;
 
-      // The entire box and crane trolley sweep smoothly across the screen from left to right,
-      // swinging with realistic pendulum tilt (Only when fully lowered and not dropping!)
-      if (!isPlacingRef.current && !isLoweringRef.current) {
+      // 1. Crane smooth winch descent from top ceiling (guaranteed to complete, never freezes!)
+      if (winchStartTimeRef.current !== null) {
+        const elapsed = timestamp - winchStartTimeRef.current;
+        const WINCH_DURATION = 380; // ms smooth descent
+        if (elapsed < WINCH_DURATION) {
+          const progress = Math.min(1, elapsed / WINCH_DURATION);
+          const easeOut = 1 - Math.pow(1 - progress, 3);
+          const currentY = -135 + 135 * easeOut;
+          setWinchY(Math.round(currentY * 10) / 10);
+          setMovingTilt(0);
+          setMovingX(0);
+          setHookX(0);
+          movingTiltRef.current = 0;
+          movingXRef.current = 0;
+        } else {
+          setWinchY(0);
+          winchStartTimeRef.current = null;
+          isLoweringRef.current = false;
+          setIsLowering(false);
+          isPlacingRef.current = false;
+          swingPhaseRef.current = 0;
+        }
+      } else if (!isPlacingRef.current) {
+        // 2. Normal pendulum swing across the screen
         swingPhaseRef.current += angularSpeed * delta;
         const currentTrolleyX = Math.sin(swingPhaseRef.current) * SWEEP_TRAVEL;
         const currentTilt = Math.sin(swingPhaseRef.current) * MAX_SWING_ANGLE;
@@ -457,11 +456,8 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
       if (dropAnimRef.current) {
         cancelAnimationFrame(dropAnimRef.current);
       }
-      if (winchAnimRef.current) {
-        cancelAnimationFrame(winchAnimRef.current);
-      }
     };
-  }, [gameState, currentLevel]);
+  }, [gameState, currentLevel, isMobile]);
 
   const activeTheme = COLOR_THEMES[currentLevel % COLOR_THEMES.length];
 

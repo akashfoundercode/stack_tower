@@ -16,8 +16,8 @@ export const OBSTACLE_CONFIGS = [
   { img: obs4, width: 148, height: 81 },
 ];
 
-// Mobile-specific compact obstacle scale (reduced size for phone screens, untouched on desktop)
-export const MOBILE_OBSTACLE_SCALE = 0.78;
+// Obstacle scale multiplier (1.0 ensures 100% natural, full size matching the shop)
+export const MOBILE_OBSTACLE_SCALE = 1.0;
 
 export function getObstacleForLevel(level: number, isMobile = false) {
   if (level === 0) {
