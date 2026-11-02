@@ -11,25 +11,24 @@ export const FallingBlock: React.FC<FallingBlockProps> = ({ debrisList }) => {
       {debrisList.map((item) => (
         <div
           key={item.id}
-          className="absolute left-1/2 pointer-events-none z-20 transition-transform duration-700 ease-in"
+          className={`absolute pointer-events-none z-40 ${
+            item.direction === 'left' ? 'animate-tumble-left' : 'animate-tumble-right'
+          }`}
           style={{
-            transform: `translate3d(calc(-50% + ${item.x}px), ${item.y}px, 0) rotate(${item.rotation}deg)`,
-            width: `${Math.max(4, item.width)}px`,
+            bottom: `${item.bottom}px`,
+            left: `calc(50% + ${item.x}px)`,
+            width: `${item.width}px`,
             height: `${item.height}px`,
-            backgroundColor: item.colorTheme.primary,
-            borderRadius: '2px',
-            boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
-            opacity: Math.max(0, 1 - item.y / 500),
+            transformOrigin: item.direction === 'left' ? 'bottom left' : 'bottom right',
           }}
         >
-          {/* Rubble details */}
-          <div className="w-full h-1 bg-black/30" />
-          <div className="w-full h-full flex items-center justify-center">
-            <div className="w-2 h-2 bg-yellow-200/40 rounded-xs" />
-          </div>
+          <img
+            src={item.image}
+            alt="Falling obstacle"
+            className="w-full h-full object-fill object-bottom drop-shadow-2xl"
+          />
         </div>
       ))}
     </>
   );
 };
-

@@ -207,10 +207,10 @@ export const GameScene: React.FC<GameSceneProps> = ({
         prev
           .map((d) => ({
             ...d,
-            y: d.y + 16,
-            rotation: d.rotation + (d.direction === 'right' ? 4 : -4),
+            y: (d.y ?? 0) + 16,
+            rotation: (d.rotation ?? 0) + (d.direction === 'right' ? 4 : -4),
           }))
-          .filter((d) => d.y < 600)
+          .filter((d) => (d.y ?? 0) < 600)
       );
     }, 25);
     return () => clearInterval(timer);

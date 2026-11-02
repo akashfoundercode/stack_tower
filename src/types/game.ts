@@ -3,11 +3,12 @@ export type GameState = 'IDLE' | 'PLAYING' | 'CASHED_OUT' | 'GAME_OVER';
 export interface BlockLayer {
   id: number;
   level: number;
-  x: number; // Left coordinate relative to scene center (0 is center of scene: -width/2 to +width/2)
+  x: number; // Center offset relative to scene center
   width: number;
   height: number;
   colorTheme: BlockColorTheme;
   isPerfect?: boolean;
+  tilt?: number; // Tilt angle in degrees for natural physics stack
 }
 
 export interface BlockColorTheme {
@@ -17,19 +18,22 @@ export interface BlockColorTheme {
   roof: string;
   windowGlow: string;
   hasAwning?: boolean;
-  styleType: 'shop' | 'apartments' | 'terrace' | 'penthouse' | 'clocktower';
+  styleType: 'shop' | 'apartments' | 'terrace' | 'penthouse' | 'clocktower' | 'victorian' | 'villa' | 'pagoda' | 'balcony';
+  shapeType?: 'rectangular' | 'arched' | 'pediment' | 'terrace-stepped' | 'sloped-roof' | 'columned';
 }
 
 export interface FallingDebris {
   id: string;
   x: number;
+  bottom?: number;
+  y?: number;
   width: number;
   height: number;
-  y: number; // visual Y offset
-  colorTheme: BlockColorTheme;
   direction: 'left' | 'right';
-  rotation: number;
-  velocity: number;
+  rotation?: number;
+  velocity?: number;
+  colorTheme?: BlockColorTheme;
+  image?: string;
 }
 
 export interface BetHistoryItem {
@@ -49,12 +53,15 @@ export interface SoundSettings {
 }
 
 export interface PlacementResult {
-  status: 'PERFECT' | 'SUCCESS' | 'MISS';
+  status: 'PERFECT' | 'GREAT' | 'GOOD' | 'OKAY' | 'MISS';
   overlapWidth: number;
   overlapX: number;
   cutWidth: number;
   cutX: number;
   cutSide: 'left' | 'right' | 'none';
   bonusPoints: number;
+  accuracy: number; // 0 to 1
+  multiplierGain: number; // how much multiplier is added this drop
+  feedbackLabel: string; // e.g. "PERFECT!", "GREAT!", "GOOD!"
 }
 

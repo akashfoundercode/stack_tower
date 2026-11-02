@@ -1,6 +1,6 @@
 import React from 'react';
 import { GameState } from '../types/game';
-import { Minus, Plus, Zap, Banknote } from 'lucide-react';
+import { Minus, Plus, Banknote } from 'lucide-react';
 import { soundFx } from '../utils/sound';
 
 interface MobileBettingOverlayProps {
@@ -26,7 +26,6 @@ export const MobileBettingOverlay: React.FC<MobileBettingOverlayProps> = ({
   level,
   demoBalance,
 }) => {
-  const quickBets = [50, 100, 200, 500, 1000];
   const isPlaying = gameState === 'PLAYING';
   const potentialPayout = Math.floor(betAmount * multiplier * 100) / 100;
   const canCashOut = isPlaying && level >= 1;
@@ -37,75 +36,70 @@ export const MobileBettingOverlay: React.FC<MobileBettingOverlayProps> = ({
     onBetChange(next);
   };
 
-  const handleQuickBet = (amt: number) => {
+  const handleAllIn = () => {
     soundFx.playClick();
-    onBetChange(Math.min(demoBalance, amt));
+    onBetChange(Math.max(10, demoBalance));
+  };
+
+  const handleDouble = () => {
+    soundFx.playClick();
+    const next = Math.min(demoBalance, betAmount * 2);
+    onBetChange(next);
   };
 
   return (
     <div className="w-full flex flex-col gap-2 pointer-events-auto select-none">
-      {/* Live In-Game Floating Stats Ribbon (only during play or cashout) */}
-      {isPlaying && (
-        <div className="flex items-center justify-between bg-black/60 backdrop-blur-md border border-white/15 px-3 py-1.5 rounded-xl shadow-lg mx-1">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="text-[11px] font-extrabold text-white uppercase tracking-wider">
-              Floor {level}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-300 font-medium">Multiplier:</span>
-            <span className="text-base font-black text-amber-400 font-mono">
-              {multiplier.toFixed(2)}x
-            </span>
-          </div>
-
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-slate-300 font-medium">Payout:</span>
-            <span className="text-sm font-black text-emerald-400 font-mono">
-              ₹{potentialPayout.toLocaleString('en-IN')}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Hazard Warning Strip Border Top (Exact element above controls in screenshot) */}
+      {/* Hazard Warning Strip Border Top (Exact black/yellow diagonal stripes as reference) */}
       <div
-        className="w-full h-3 rounded-full shadow-md border border-black/30 overflow-hidden"
+        className="w-full h-2.5 sm:h-3 rounded-full shadow-md border border-black/40 overflow-hidden"
         style={{
           background:
-            'repeating-linear-gradient(45deg, #f59e0b, #f59e0b 12px, #1e293b 12px, #1e293b 24px)',
+            'repeating-linear-gradient(45deg, #f59e0b, #f59e0b 14px, #111827 14px, #111827 28px)',
         }}
       />
 
-      {/* Main Glass Control Dock */}
-      <div className="bg-slate-950/85 backdrop-blur-xl border border-white/10 rounded-2xl p-2.5 sm:p-3 shadow-2xl flex flex-col gap-2">
-        {/* Row 1: Left Quick Button, Center Minus/Input/Plus, Right x2 Multiplier */}
-        <div className="flex items-center gap-2">
-          {/* Left Mini Quick-Bet / Min Button */}
+      {/* Betting Control Container:
+          Mobile: Stacked rows (ALL IN / Stepper / x2 on top, BUILD on bottom)
+          Desktop (md+): Side-by-side horizontal dock (ALL IN / Stepper / x2 on LEFT, BUILD on RIGHT) */}
+      <div className="w-full flex flex-col md:flex-row md:items-center md:gap-3 gap-2">
+        {/* LEFT SIDE ON DESKTOP: [ ALL IN ]  [ -   10   + ]  [ x2 ] */}
+        <div className="flex items-stretch gap-2 w-full md:flex-1">
+          {/* ALL IN Button (Bright Blue Glossy Pill with bevel & shadow) */}
           <button
-            disabled={isPlaying}
-            onClick={() => handleQuickBet(50)}
-            className="h-11 px-3 rounded-xl bg-gradient-to-b from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 disabled:opacity-40 disabled:pointer-events-none text-white font-black text-xs shadow-md border border-blue-400/30 active:scale-95 transition flex items-center justify-center min-w-[48px]"
+            disabled={isPlaying || demoBalance <= 0}
+            onClick={handleAllIn}
+            className="flex-1 md:max-w-[120px] h-12 sm:h-13 rounded-2xl font-black text-sm sm:text-base tracking-wider text-white uppercase disabled:opacity-40 disabled:pointer-events-none active:scale-95 transition flex items-center justify-center shadow-[0_6px_16px_rgba(37,99,235,0.45)] border-t border-b-2 border-x border-t-sky-300/60 border-b-blue-900 border-x-blue-600 relative overflow-hidden"
+            style={{
+              background:
+                'linear-gradient(180deg, #3b82f6 0%, #2563eb 45%, #1d4ed8 75%, #1e40af 100%)',
+            }}
           >
-            MIN
+            {/* Top glass highlight reflection */}
+            <div className="absolute top-0 inset-x-0 h-[45%] bg-gradient-to-b from-white/35 to-transparent pointer-events-none" />
+            <span className="relative drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">ALL IN</span>
           </button>
 
-          {/* Center Capsule: Minus, Editable Amount, Plus (Identical to reference capsule) */}
-          <div className="flex-1 h-11 bg-slate-800/90 rounded-xl border border-slate-700/80 flex items-center justify-between px-1.5 shadow-inner">
-            {/* Minus */}
+          {/* Stepper Capsule [ -   AMOUNT   + ] (Dark metallic frame with sunken circular buttons) */}
+          <div
+            className="flex-[1.6] sm:flex-[1.8] md:flex-1 h-12 sm:h-13 rounded-2xl border-2 border-stone-600/70 shadow-[inset_0_2px_6px_rgba(0,0,0,0.8),0_4px_12px_rgba(0,0,0,0.4)] flex items-center justify-between px-2 relative"
+            style={{
+              background: 'linear-gradient(180deg, #374151 0%, #1f2937 55%, #111827 100%)',
+            }}
+          >
+            {/* Circular Minus Button */}
             <button
               disabled={isPlaying || betAmount <= 10}
               onClick={() => handleAdjust(-10)}
-              className="w-8 h-8 rounded-lg bg-slate-700/80 hover:bg-slate-600 disabled:opacity-30 disabled:pointer-events-none text-white font-black flex items-center justify-center active:scale-95 transition shadow"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full disabled:opacity-30 disabled:pointer-events-none text-white/90 active:scale-90 transition flex items-center justify-center shadow-[inset_0_2px_3px_rgba(255,255,255,0.15),0_2px_4px_rgba(0,0,0,0.6)] border border-stone-600"
+              style={{
+                background: 'linear-gradient(180deg, #4b5563 0%, #374151 50%, #1f2937 100%)',
+              }}
             >
               <Minus className="w-4 h-4 stroke-[3]" />
             </button>
 
-            {/* Bet Input */}
-            <div className="flex items-center justify-center px-1">
-              <span className="text-amber-400 font-black text-xs mr-0.5">₹</span>
+            {/* Editable Amount Input */}
+            <div className="flex-1 flex items-center justify-center px-1">
               <input
                 type="number"
                 disabled={isPlaying}
@@ -116,100 +110,171 @@ export const MobileBettingOverlay: React.FC<MobileBettingOverlayProps> = ({
                     onBetChange(Math.min(demoBalance, val));
                   }
                 }}
-                className="w-16 sm:w-20 bg-transparent text-center text-lg sm:text-xl font-black text-white outline-none font-mono tracking-tight"
+                className="w-full bg-transparent text-center text-xl sm:text-2xl font-black text-white outline-none font-mono tracking-tight drop-shadow-md select-text"
               />
             </div>
 
-            {/* Plus */}
+            {/* Circular Plus Button */}
             <button
               disabled={isPlaying || betAmount >= demoBalance}
               onClick={() => handleAdjust(10)}
-              className="w-8 h-8 rounded-lg bg-slate-700/80 hover:bg-slate-600 disabled:opacity-30 disabled:pointer-events-none text-white font-black flex items-center justify-center active:scale-95 transition shadow"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full disabled:opacity-30 disabled:pointer-events-none text-white/90 active:scale-90 transition flex items-center justify-center shadow-[inset_0_2px_3px_rgba(255,255,255,0.15),0_2px_4px_rgba(0,0,0,0.6)] border border-stone-600"
+              style={{
+                background: 'linear-gradient(180deg, #4b5563 0%, #374151 50%, #1f2937 100%)',
+              }}
             >
               <Plus className="w-4 h-4 stroke-[3]" />
             </button>
           </div>
 
-          {/* Right x2 Multiplier Pill (Exact button from the screenshot [x2]) */}
+          {/* x2 Button (Bright Blue Glossy Pill matching ALL IN) */}
           <button
             disabled={isPlaying || betAmount * 2 > demoBalance}
-            onClick={() => {
-              soundFx.playClick();
-              onBetChange(Math.min(demoBalance, betAmount * 2));
+            onClick={handleDouble}
+            className="flex-1 md:max-w-[100px] h-12 sm:h-13 rounded-2xl font-black text-sm sm:text-base tracking-wider text-white uppercase disabled:opacity-40 disabled:pointer-events-none active:scale-95 transition flex items-center justify-center shadow-[0_6px_16px_rgba(37,99,235,0.45)] border-t border-b-2 border-x border-t-sky-300/60 border-b-blue-900 border-x-blue-600 relative overflow-hidden"
+            style={{
+              background:
+                'linear-gradient(180deg, #3b82f6 0%, #2563eb 45%, #1d4ed8 75%, #1e40af 100%)',
             }}
-            className="h-11 px-3.5 rounded-xl bg-gradient-to-b from-blue-500 to-blue-700 hover:from-blue-400 hover:to-blue-600 disabled:opacity-40 disabled:pointer-events-none text-white font-black text-xs shadow-md border border-blue-400/30 active:scale-95 transition flex items-center justify-center min-w-[48px]"
           >
-            x2
+            {/* Top glass highlight reflection */}
+            <div className="absolute top-0 inset-x-0 h-[45%] bg-gradient-to-b from-white/35 to-transparent pointer-events-none" />
+            <span className="relative drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">x2</span>
           </button>
         </div>
 
-        {/* Quick Bet Pills (when not actively placing) */}
-        {!isPlaying && (
-          <div className="flex items-center justify-between gap-1 overflow-x-auto no-scrollbar py-0.5">
-            {quickBets.map((amt) => (
-              <button
-                key={amt}
-                onClick={() => handleQuickBet(amt)}
-                className={`flex-1 py-1 rounded-lg text-[11px] font-black tracking-tight transition active:scale-95 border ${
-                  betAmount === amt
-                    ? 'bg-amber-400 text-slate-950 border-amber-300 shadow'
-                    : 'bg-slate-900/90 text-slate-300 border-slate-700/60 hover:bg-slate-800'
-                }`}
-              >
-                ₹{amt}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Primary Action Button (The BIG Iconic BUILD or START Button) */}
-        <div className="pt-0.5">
+        {/* RIGHT SIDE ON DESKTOP: PRIMARY BIG BUILD BUTTON */}
+        <div className="w-full md:flex-1">
           {!isPlaying ? (
+            /* START GAME / BET BUTTON */
             <button
               onClick={() => {
                 soundFx.playClick();
                 onStartGame();
               }}
               disabled={demoBalance < betAmount || betAmount < 10}
-              className="w-full py-3.5 sm:py-4 rounded-xl font-black text-lg sm:text-xl uppercase tracking-wider text-slate-950 bg-gradient-to-r from-yellow-400 via-amber-300 to-yellow-500 active:scale-[0.98] border-2 border-yellow-200 shadow-[0_6px_20px_rgba(245,158,11,0.5)] transition flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full relative h-12 sm:h-14 rounded-2xl active:scale-[0.98] transition-all shadow-[0_8px_25px_rgba(245,158,11,0.55)] border-2 border-black/90 overflow-hidden flex flex-col justify-between group disabled:opacity-50"
+              style={{
+                background:
+                  'repeating-linear-gradient(45deg, #18181b 0px, #18181b 12px, #f59e0b 12px, #f59e0b 24px)',
+              }}
             >
-              <Zap className="w-5 h-5 fill-slate-950" />
-              START GAME (₹{betAmount})
-            </button>
-          ) : (
-            <div className="flex items-center gap-2">
-              {/* Massive Hazard-Striped BUILD Button */}
-              <button
-                onClick={onBuild}
-                className="flex-1 relative h-14 sm:h-16 rounded-xl font-black text-xl sm:text-2xl uppercase tracking-wider text-slate-950 active:scale-95 transition shadow-[0_8px_24px_rgba(245,158,11,0.6)] border-2 border-yellow-300 overflow-hidden group"
+              {/* Top diagonal stripe bar */}
+              <div className="w-full h-1.5 sm:h-2 opacity-95 bg-yellow-400/30" />
+
+              {/* Inner Golden 24K Luxury Bullion Slab with 3D Bevel & Rivets */}
+              <div
+                className="flex-1 mx-1.5 mb-1.5 rounded-xl border border-yellow-100/90 shadow-[inset_0_2px_4px_rgba(255,255,255,0.9),inset_0_-2px_4px_rgba(113,63,18,0.5)] flex items-center justify-between px-3 relative overflow-hidden"
                 style={{
                   background:
-                    'repeating-linear-gradient(45deg, #f59e0b, #f59e0b 16px, #1e293b 16px, #1e293b 32px)',
+                    'linear-gradient(180deg, #fffbeb 0%, #fef08a 18%, #facc15 45%, #ca8a04 80%, #a16207 100%)',
                 }}
               >
-                {/* Yellow center core */}
-                <div className="absolute inset-1.5 bg-gradient-to-r from-yellow-400 via-amber-300 to-yellow-400 rounded-lg flex items-center justify-center gap-2 shadow-inner border border-yellow-200 group-hover:brightness-105 transition">
-                  <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] font-black text-slate-950 tracking-widest">
+                {/* Top glass reflection sheen */}
+                <div className="absolute top-0 inset-x-0 h-[40%] bg-gradient-to-b from-white/45 to-transparent pointer-events-none" />
+
+                {/* Left metallic screw rivet */}
+                <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-yellow-200 to-amber-700 border border-amber-900/60 shadow flex-shrink-0 flex items-center justify-center">
+                  <div className="w-1.5 h-[1px] bg-amber-950/70 transform rotate-45" />
+                </div>
+
+                {/* Center Title */}
+                <div className="flex-1 flex items-center justify-center min-w-0 px-1">
+                  <span className="text-lg sm:text-2xl font-black tracking-widest text-white uppercase drop-shadow-[0_2px_4px_rgba(69,26,3,0.8)] font-mono whitespace-nowrap">
                     BUILD
                   </span>
                 </div>
-              </button>
 
-              {/* Cash Out Button (appears immediately once eligible) */}
-              {canCashOut && (
+                {/* Right metallic screw rivet */}
+                <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-yellow-200 to-amber-700 border border-amber-900/60 shadow flex-shrink-0 flex items-center justify-center">
+                  <div className="w-1.5 h-[1px] bg-amber-950/70 transform -rotate-45" />
+                </div>
+              </div>
+            </button>
+          ) : (
+            /* ACTIVE PLAYING: CASHOUT (LEFT) & BUILD DROP (RIGHT) */
+            <div className="flex items-center gap-2.5 w-full">
+              {/* 1. CASHOUT BUTTON ON THE LEFT */}
+              {canCashOut ? (
                 <button
                   onClick={onCashOut}
-                  className="w-2/5 sm:w-1/2 h-14 sm:h-16 px-2 rounded-xl font-black text-xs sm:text-sm uppercase tracking-wide text-white bg-gradient-to-r from-emerald-600 via-green-500 to-emerald-600 hover:brightness-110 active:scale-95 border-2 border-emerald-300 shadow-[0_6px_20px_rgba(16,185,129,0.5)] transition flex flex-col items-center justify-center animate-pulse-glow"
+                  className="w-[42%] sm:w-[38%] md:w-[36%] h-12 sm:h-14 rounded-2xl relative overflow-hidden flex flex-col items-center justify-center border-2 border-emerald-300 shadow-[0_8px_25px_rgba(16,185,129,0.7),inset_0_2px_4px_rgba(255,255,255,0.7)] active:scale-95 transition-all group animate-pulse-glow"
+                  style={{
+                    background:
+                      'linear-gradient(180deg, #10b981 0%, #059669 45%, #047857 85%, #064e3b 100%)',
+                  }}
                 >
-                  <div className="flex items-center gap-1">
-                    <Banknote className="w-4 h-4" />
-                    <span>CASH OUT</span>
+                  {/* Top glass specular reflection */}
+                  <div className="absolute top-0 inset-x-0 h-[45%] bg-gradient-to-b from-white/35 to-transparent pointer-events-none" />
+
+                  <div className="relative flex items-center gap-1.5 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
+                    <Banknote className="w-4 h-4 text-emerald-200 stroke-[2.5]" />
+                    <span className="font-black text-xs sm:text-sm uppercase tracking-wider font-mono">
+                      CASH OUT
+                    </span>
                   </div>
-                  <span className="text-emerald-100 font-mono text-sm sm:text-base font-black">
+
+                  <span className="relative text-white font-mono text-sm sm:text-base font-black tracking-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)] text-emerald-100">
                     ₹{potentialPayout.toLocaleString('en-IN')}
                   </span>
                 </button>
+              ) : (
+                <div
+                  className="w-[42%] sm:w-[38%] md:w-[36%] h-12 sm:h-14 rounded-2xl relative overflow-hidden flex flex-col items-center justify-center border border-slate-700/80 bg-slate-900/80 opacity-50 select-none pointer-events-none shadow-inner"
+                >
+                  <div className="flex items-center gap-1.5 text-slate-400">
+                    <Banknote className="w-4 h-4 text-slate-500" />
+                    <span className="font-extrabold text-xs uppercase tracking-wider font-mono">
+                      CASH OUT
+                    </span>
+                  </div>
+                  <span className="text-slate-500 font-mono text-xs font-bold tracking-tight">
+                    LOCKED
+                  </span>
+                </div>
               )}
+
+              {/* 2. BUILD DROP BUTTON ON THE RIGHT */}
+              <button
+                onClick={onBuild}
+                className="flex-1 relative h-12 sm:h-14 rounded-2xl active:scale-[0.98] transition-all shadow-[0_8px_25px_rgba(245,158,11,0.65)] border-2 border-black/90 overflow-hidden flex flex-col justify-between group"
+                style={{
+                  background:
+                    'repeating-linear-gradient(45deg, #18181b 0px, #18181b 12px, #f59e0b 12px, #f59e0b 24px)',
+                }}
+              >
+                {/* Top diagonal stripe accent line */}
+                <div className="w-full h-1.5 sm:h-2 opacity-95 bg-yellow-400/30" />
+
+                {/* Inner Golden 24K Luxury Bullion Slab with 3D Bevel & Rivets */}
+                <div
+                  className="flex-1 mx-1.5 mb-1.5 rounded-xl border border-yellow-100/90 shadow-[inset_0_2px_4px_rgba(255,255,255,0.9),inset_0_-2px_4px_rgba(113,63,18,0.5)] flex items-center justify-between px-2 sm:px-3 relative overflow-hidden"
+                  style={{
+                    background:
+                      'linear-gradient(180deg, #fffbeb 0%, #fef08a 18%, #facc15 45%, #ca8a04 80%, #a16207 100%)',
+                  }}
+                >
+                  {/* Top glass reflection sheen */}
+                  <div className="absolute top-0 inset-x-0 h-[40%] bg-gradient-to-b from-white/45 to-transparent pointer-events-none" />
+
+                  {/* Left metallic screw rivet */}
+                  <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-gradient-to-br from-yellow-200 to-amber-700 border border-amber-900/60 shadow flex-shrink-0 flex items-center justify-center">
+                    <div className="w-1.5 h-[1px] bg-amber-950/70 transform rotate-45" />
+                  </div>
+
+                  {/* Center Action Label */}
+                  <div className="flex-1 flex items-center justify-center min-w-0 px-1">
+                    <span className="text-xs min-[360px]:text-sm sm:text-base md:text-xl font-black tracking-wider text-white uppercase drop-shadow-[0_2px_4px_rgba(69,26,3,0.8)] font-mono whitespace-nowrap animate-pulse">
+                      DROP / BUILD
+                    </span>
+                  </div>
+
+                  {/* Right metallic screw rivet */}
+                  <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-gradient-to-br from-yellow-200 to-amber-700 border border-amber-900/60 shadow flex-shrink-0 flex items-center justify-center">
+                    <div className="w-1.5 h-[1px] bg-amber-950/70 transform -rotate-45" />
+                  </div>
+                </div>
+              </button>
             </div>
           )}
         </div>

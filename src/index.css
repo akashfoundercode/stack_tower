@@ -25,3 +25,220 @@
   animation: pulseGlow 1.2s infinite alternate ease-in-out;
 }
 
+/* Realistic Distant Hot Air Balloons: Small, Soft, Deep in Background on Outer Edges (NEVER IN CENTER!) */
+@keyframes balloonSideDriftLeft {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(-1.5deg);
+  }
+  50% {
+    transform: translate3d(5px, -22px, 0) rotate(1.5deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(-1.5deg);
+  }
+}
+
+@keyframes balloonSideDriftRight {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(1.5deg);
+  }
+  50% {
+    transform: translate3d(-6px, -26px, 0) rotate(-1.5deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(1.5deg);
+  }
+}
+
+.animate-balloon-side-left {
+  animation: balloonSideDriftLeft 20s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.animate-balloon-side-right {
+  animation: balloonSideDriftRight 24s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* Flying Pop Multiplier +X Badge on right side */
+@keyframes popFlyUp {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.5);
+    opacity: 0;
+  }
+  20% {
+    transform: translate3d(10px, -20px, 0) scale(1.25);
+    opacity: 1;
+  }
+  60% {
+    transform: translate3d(25px, -55px, 0) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(35px, -90px, 0) scale(0.9);
+    opacity: 0;
+  }
+}
+
+.animate-fly-multiplier {
+  animation: popFlyUp 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  will-change: transform, opacity;
+}
+
+/* Physics-based block toppling and falling down off tower */
+@keyframes tumbleFallLeft {
+  0% {
+    transform: translate3d(-50%, 0px, 0px) rotate(0deg);
+    opacity: 1;
+  }
+  20% {
+    transform: translate3d(calc(-50% - 25px), 25px, 0px) rotate(-30deg);
+    opacity: 1;
+  }
+  50% {
+    transform: translate3d(calc(-50% - 75px), 160px, 0px) rotate(-75deg);
+    opacity: 0.95;
+  }
+  100% {
+    transform: translate3d(calc(-50% - 150px), 550px, 0px) rotate(-160deg);
+    opacity: 0;
+  }
+}
+
+@keyframes tumbleFallRight {
+  0% {
+    transform: translate3d(-50%, 0px, 0px) rotate(0deg);
+    opacity: 1;
+  }
+  20% {
+    transform: translate3d(calc(-50% + 25px), 25px, 0px) rotate(30deg);
+    opacity: 1;
+  }
+  50% {
+    transform: translate3d(calc(-50% + 75px), 160px, 0px) rotate(75deg);
+    opacity: 0.95;
+  }
+  100% {
+    transform: translate3d(calc(-50% + 150px), 550px, 0px) rotate(160deg);
+    opacity: 0;
+  }
+}
+
+.animate-tumble-left {
+  animation: tumbleFallLeft 1.1s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-tumble-right {
+  animation: tumbleFallRight 1.1s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards;
+  will-change: transform, opacity;
+}
+
+/* Premium Arcade Center Announcement Pop (Clean, Punchy & Highly Legible) */
+@keyframes arcadePop {
+  0% {
+    transform: translate3d(-50%, -50%, 0) scale(0.5);
+    opacity: 0;
+  }
+  16% {
+    transform: translate3d(-50%, -50%, 0) scale(1.15);
+    opacity: 1;
+  }
+  28% {
+    transform: translate3d(-50%, -50%, 0) scale(1.0);
+    opacity: 1;
+  }
+  80% {
+    transform: translate3d(-50%, -50%, 0) scale(1.0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(-50%, -58%, 0) scale(0.92);
+    opacity: 0;
+  }
+}
+
+.animate-arcade-pop {
+  animation: arcadePop 1.1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+/* Radiant glow pulse behind center announcement */
+@keyframes radialAuraPulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  25% {
+    transform: scale(1.3);
+    opacity: 0.85;
+  }
+  75% {
+    transform: scale(1.1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+}
+
+.animate-radial-aura {
+  animation: radialAuraPulse 1.05s ease-out forwards;
+}
+
+/* Luxury Modal Pop & Shimmer Keyframes */
+@keyframes luxuryModalEntry {
+  0% {
+    transform: scale(0.82) translateY(20px);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.03) translateY(-4px);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-luxury-entry {
+  animation: luxuryModalEntry 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes spinSlow {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 28s linear infinite;
+}
+
+@keyframes goldShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-gold-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: goldShimmer 2.8s infinite;
+}
+
+

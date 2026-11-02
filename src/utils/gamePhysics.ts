@@ -1,10 +1,10 @@
 import { PlacementResult } from '../types/game';
 
 // Configuration
-export const BASE_BLOCK_WIDTH = 220; // base starting width in px
+export const BASE_BLOCK_WIDTH = 140; // standard obstacle width in px
 export const BLOCK_HEIGHT = 70; // height of each stacked level
-export const PERFECT_TOLERANCE_PX = 3.5; // pixel tolerance to qualify as PERFECT
-export const MIN_PLAYABLE_WIDTH = 12; // below this, stack is impossibly small -> game over
+export const PERFECT_TOLERANCE_PX = 4; // pixel tolerance to qualify as PERFECT
+export const MAX_SAFE_ALIGNMENT_OFFSET = 20; // Strict: if offset > 20px, house is outside foundation -> LOOSE!
 
 export const COLOR_THEMES = [
   {
@@ -15,69 +15,77 @@ export const COLOR_THEMES = [
     windowGlow: '#fef08a',
     hasAwning: true,
     styleType: 'shop' as const,
+    shapeType: 'rectangular' as const,
   },
   {
-    primary: '#ea580c', // Warm Terracotta Italian Building (like in screenshot)
+    primary: '#ea580c', // Warm Terracotta Italian Building (arch windows & roof cornice)
     secondary: '#f97316',
     trim: '#fed7aa',
     roof: '#c2410c',
     windowGlow: '#fef08a',
     hasAwning: false,
     styleType: 'apartments' as const,
+    shapeType: 'arched' as const,
   },
   {
-    primary: '#059669', // Emerald boutique
+    primary: '#059669', // Emerald boutique with terrace railing
     secondary: '#10b981',
     trim: '#a7f3d0',
     roof: '#047857',
     windowGlow: '#fef08a',
     hasAwning: true,
     styleType: 'shop' as const,
+    shapeType: 'terrace-stepped' as const,
   },
   {
-    primary: '#d97706', // Sunny amber building
+    primary: '#d97706', // Sunny amber building with neoclassical pediment peak
     secondary: '#f59e0b',
     trim: '#fef3c7',
     roof: '#b45309',
     windowGlow: '#ffffff',
     hasAwning: false,
     styleType: 'apartments' as const,
+    shapeType: 'pediment' as const,
   },
   {
-    primary: '#7c3aed', // Purple Victorian facade
+    primary: '#7c3aed', // Purple Victorian facade with classical columns
     secondary: '#8b5cf6',
     trim: '#ddd6fe',
     roof: '#6d28d9',
     windowGlow: '#fef08a',
     hasAwning: true,
     styleType: 'terrace' as const,
+    shapeType: 'columned' as const,
   },
   {
-    primary: '#db2777', // Rose boutique
+    primary: '#db2777', // Rose boutique with mansard/sloped dormer roof
     secondary: '#ec4899',
     trim: '#fbcfe8',
     roof: '#be185d',
     windowGlow: '#ffffff',
     hasAwning: true,
     styleType: 'shop' as const,
+    shapeType: 'sloped-roof' as const,
   },
   {
-    primary: '#0891b2', // Cyan modern terrace
+    primary: '#0891b2', // Cyan modern luxury penthouse
     secondary: '#06b6d4',
     trim: '#cffafe',
     roof: '#0e7490',
     windowGlow: '#fef08a',
     hasAwning: false,
     styleType: 'apartments' as const,
+    shapeType: 'terrace-stepped' as const,
   },
   {
-    primary: '#e11d48', // Red brick townhouse
+    primary: '#e11d48', // Red brick clocktower with crown battlement
     secondary: '#f43f5e',
     trim: '#ffe4e6',
     roof: '#9f1239',
     windowGlow: '#fef08a',
     hasAwning: false,
     styleType: 'clocktower' as const,
+    shapeType: 'pediment' as const,
   },
 ];
 
@@ -109,93 +117,105 @@ export function calculateMultiplier(level: number): number {
 }
 
 /**
- * Speed progression based on level (pixels per millisecond / sweep speed)
+ * Speed progression based on level (pixels per second)
+ * Kept intentionally smooth and relaxed ("slowly latkega properly smoothly")
  */
 export function calculateSpeed(level: number): number {
-  // Starts comfortable, gets faster smoothly
-  const baseSpeed = 220; // px per second
-  const maxSpeed = 580;
-  const speed = baseSpeed + Math.min(level * 25, maxSpeed - baseSpeed);
+  // Relaxed, graceful speed starting around 130px/s, gently increasing up to ~240px/s
+  const baseSpeed = 135; 
+  const maxSpeed = 245;
+  const speed = baseSpeed + Math.min(level * 9, maxSpeed - baseSpeed);
   return speed;
 }
 
 /**
- * Pure function to calculate overlap and debris
+ * Stable Width for upcoming box:
+ * Width stays consistent and never shrinks, ensuring zero gaps!
+ */
+export function calculateNextWidth(_level: number): number {
+  return BASE_BLOCK_WIDTH;
+}
+
+/**
+ * Strict Alignment Placement Physics:
+ * "Ye poora game alignment ka hai - agar zara house bahar hua to loose ho jaega!"
+ * 
+ * - If dropped offset > MAX_SAFE_ALIGNMENT_OFFSET (20px) -> MISS (house topples off edge, game over!)
+ * - If within 4px of center -> PERFECT! (Dead center alignment +0.75x bonus)
+ * - If within 12px -> GREAT DROP! (+0.50x bonus)
+ * - If within 20px -> BALANCED! (+0.25x bonus)
  */
 export function calculatePlacement(
   movingX: number,
   movingWidth: number,
   targetX: number,
-  targetWidth: number,
+  _targetWidth: number,
   tolerance = PERFECT_TOLERANCE_PX
 ): PlacementResult {
   const diff = movingX - targetX;
+  const absDiff = Math.abs(diff);
 
-  // Perfect landing if within tolerance
-  if (Math.abs(diff) <= tolerance) {
+  // Strict alignment check:
+  // If the house is even slightly outside the foundation edge (> 20px offset) -> LOOSE!
+  if (absDiff > MAX_SAFE_ALIGNMENT_OFFSET) {
+    return {
+      status: 'MISS',
+      overlapWidth: movingWidth,
+      overlapX: movingX,
+      cutWidth: 0,
+      cutX: 0,
+      cutSide: diff > 0 ? 'right' : 'left',
+      bonusPoints: 0,
+      accuracy: 0,
+      multiplierGain: 0,
+      feedbackLabel: 'MISSED!',
+    };
+  }
+
+  // 1. PERFECT LANDING (Exact center within tolerance <= 4px)
+  if (absDiff <= tolerance) {
     return {
       status: 'PERFECT',
-      overlapWidth: targetWidth,
-      overlapX: targetX, // snap precisely to target
+      overlapWidth: movingWidth,
+      overlapX: targetX, // Clean center snap
       cutWidth: 0,
       cutX: 0,
       cutSide: 'none',
       bonusPoints: 100,
+      accuracy: 1.0,
+      multiplierGain: 0.75, // Huge multiplier boost for dead center!
+      feedbackLabel: 'PERFECT!',
     };
   }
 
-  // Moving block's bounds
-  const movingLeft = movingX - movingWidth / 2;
-  const movingRight = movingX + movingWidth / 2;
-
-  // Target block's bounds
-  const targetLeft = targetX - targetWidth / 2;
-  const targetRight = targetX + targetWidth / 2;
-
-  // Overlap bounds
-  const overlapLeft = Math.max(movingLeft, targetLeft);
-  const overlapRight = Math.min(movingRight, targetRight);
-  const overlapWidth = overlapRight - overlapLeft;
-
-  // If no overlap or too tiny
-  if (overlapWidth <= MIN_PLAYABLE_WIDTH) {
+  // 2. GREAT DROP (Close alignment <= 12px)
+  if (absDiff <= 12) {
     return {
-      status: 'MISS',
-      overlapWidth: 0,
-      overlapX: movingX,
-      cutWidth: movingWidth,
-      cutX: movingX,
-      cutSide: diff > 0 ? 'right' : 'left',
-      bonusPoints: 0,
+      status: 'GREAT',
+      overlapWidth: movingWidth,
+      overlapX: Math.round(movingX * 10) / 10,
+      cutWidth: 0,
+      cutX: 0,
+      cutSide: 'none',
+      bonusPoints: 70,
+      accuracy: Math.max(0.7, 1 - absDiff / MAX_SAFE_ALIGNMENT_OFFSET),
+      multiplierGain: 0.50,
+      feedbackLabel: 'GREAT DROP!',
     };
   }
 
-  // Calculate cut / overhang
-  const overlapCenter = (overlapLeft + overlapRight) / 2;
-  let cutWidth = 0;
-  let cutCenter = 0;
-  let cutSide: 'left' | 'right' = 'right';
-
-  if (movingLeft < targetLeft) {
-    // Overhangs on the left
-    cutWidth = targetLeft - movingLeft;
-    cutCenter = movingLeft + cutWidth / 2;
-    cutSide = 'left';
-  } else {
-    // Overhangs on the right
-    cutWidth = movingRight - targetRight;
-    cutCenter = targetRight + cutWidth / 2;
-    cutSide = 'right';
-  }
-
+  // 3. BALANCED / GOOD (Within safe boundary <= 20px)
   return {
-    status: 'SUCCESS',
-    overlapWidth: Math.round(overlapWidth * 10) / 10,
-    overlapX: Math.round(overlapCenter * 10) / 10,
-    cutWidth: Math.round(cutWidth * 10) / 10,
-    cutX: Math.round(cutCenter * 10) / 10,
-    cutSide,
-    bonusPoints: 50,
+    status: 'GOOD',
+    overlapWidth: movingWidth,
+    overlapX: Math.round(movingX * 10) / 10,
+    cutWidth: 0,
+    cutX: 0,
+    cutSide: 'none',
+    bonusPoints: 40,
+    accuracy: Math.max(0.2, 1 - absDiff / MAX_SAFE_ALIGNMENT_OFFSET),
+    multiplierGain: 0.25,
+    feedbackLabel: 'NICE STACK!',
   };
 }
 

@@ -186,10 +186,10 @@ export const GamePage: React.FC = () => {
   };
 
   return (
-    <div className="w-screen h-[100dvh] overflow-hidden bg-slate-950 flex justify-center items-center">
-      {/* Container: 100% full screen on phones, responsive frame on desktops */}
-      <div className="relative w-full h-full max-w-[430px] max-h-[920px] shadow-2xl md:rounded-3xl md:border-4 md:border-slate-800 overflow-hidden flex flex-col justify-between">
-        {/* Layer 1: Full-Screen Immersive Canvas Game Scene (The entire background) */}
+    <div className="w-screen h-[100dvh] overflow-hidden bg-[#097cd9] flex flex-col items-center justify-between">
+      {/* Fullscreen responsive container: 100% width on laptop/desktop & mobile */}
+      <div className="relative w-full h-full overflow-hidden flex flex-col justify-between">
+        {/* Layer 1: Full-Screen Immersive Canvas Game Scene (stretches across laptop & mobile) */}
         <FullscreenGameScene
           gameState={gameState}
           onStackSuccess={handleStackSuccess}
@@ -198,29 +198,35 @@ export const GamePage: React.FC = () => {
           buildTrigger={buildTrigger}
         />
 
-        {/* Layer 2: Floating Top Header Overlay (Balance, Currency, Top Up, Sound) */}
-        <MobileHeader
-          demoBalance={demoBalance}
-          onResetBalance={handleResetBalance}
-          soundEnabled={soundEnabled}
-          onToggleSound={handleToggleSound}
-          onOpenHistory={() => setShowHistoryModal(true)}
-        />
-
-        {/* Layer 3: Bottom Betting Controls Overlay Floating directly over the game world */}
-        <div className="relative z-30 p-2.5 sm:p-3 pb-4 sm:pb-5">
-          <MobileBettingOverlay
-            gameState={gameState}
-            betAmount={selectedBet}
-            onBetChange={(amt) => setSelectedBet(amt)}
-            onStartGame={handleStartGame}
-            onBuild={handleBuild}
-            onCashOut={handleCashOut}
-            multiplier={currentMultiplier}
-            level={currentLevel}
+        {/* Layer 2: Top Bar Header (Screenshot Style dark-striped navbar) */}
+        <header className="absolute top-0 inset-x-0 z-40 pointer-events-auto">
+          <MobileHeader
             demoBalance={demoBalance}
+            onResetBalance={handleResetBalance}
+            soundEnabled={soundEnabled}
+            onToggleSound={handleToggleSound}
+            onOpenHistory={() => setShowHistoryModal(true)}
           />
-        </div>
+        </header>
+
+        {/* Layer 3: Footer Betting Controls:
+            Mobile: Centered max-w-md
+            Desktop: Wide max-w-4xl horizontal dock (ALL IN / Stepper left side, BUILD right side) */}
+        <footer className="absolute bottom-0 inset-x-0 z-30 p-2 sm:p-3 pb-3 sm:pb-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-black via-black/90 to-transparent pt-6 flex justify-center pointer-events-none">
+          <div className="w-full max-w-md md:max-w-4xl pointer-events-auto">
+            <MobileBettingOverlay
+              gameState={gameState}
+              betAmount={selectedBet}
+              onBetChange={(amt) => setSelectedBet(amt)}
+              onStartGame={handleStartGame}
+              onBuild={handleBuild}
+              onCashOut={handleCashOut}
+              multiplier={currentMultiplier}
+              level={currentLevel}
+              demoBalance={demoBalance}
+            />
+          </div>
+        </footer>
 
         {/* Modals */}
         <ResultModal

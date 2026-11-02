@@ -161,7 +161,22 @@ export const BettingPanel: React.FC<BettingPanelProps> = ({
           </button>
         ) : (
           <div className="flex flex-col sm:flex-row gap-2">
-            {/* The Famous Hazard-Striped BUILD Button from Screenshot! */}
+            {/* CASH OUT Button on LEFT */}
+            {canCashOut && (
+              <button
+                onClick={() => {
+                  onCashOut();
+                }}
+                className="w-full sm:w-1/2 py-4 px-4 rounded-xl font-black text-lg md:text-xl uppercase tracking-wide text-white bg-gradient-to-r from-emerald-600 via-green-500 to-emerald-600 hover:brightness-110 active:scale-95 border-2 border-emerald-300 shadow-[0_6px_20px_rgba(16,185,129,0.5)] transition flex items-center justify-center gap-2 animate-pulse-glow"
+              >
+                <Banknote className="w-6 h-6" />
+                <span>
+                  CASH OUT ₹{potentialPayout.toLocaleString('en-IN')}
+                </span>
+              </button>
+            )}
+
+            {/* The Famous Hazard-Striped BUILD Button on RIGHT! */}
             <button
               onClick={() => {
                 onBuild();
@@ -180,21 +195,6 @@ export const BettingPanel: React.FC<BettingPanelProps> = ({
                 </span>
               </div>
             </button>
-
-            {/* CASH OUT Button */}
-            {canCashOut && (
-              <button
-                onClick={() => {
-                  onCashOut();
-                }}
-                className="w-full sm:w-1/2 py-4 px-4 rounded-xl font-black text-lg md:text-xl uppercase tracking-wide text-white bg-gradient-to-r from-emerald-600 via-green-500 to-emerald-600 hover:brightness-110 active:scale-95 border-2 border-emerald-300 shadow-[0_6px_20px_rgba(16,185,129,0.5)] transition flex items-center justify-center gap-2 animate-pulse-glow"
-              >
-                <Banknote className="w-6 h-6" />
-                <span>
-                  CASH OUT ₹{potentialPayout.toLocaleString('en-IN')}
-                </span>
-              </button>
-            )}
           </div>
         )}
       </div>
