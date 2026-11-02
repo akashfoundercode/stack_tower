@@ -241,4 +241,60 @@
   animation: goldShimmer 2.8s infinite;
 }
 
+/* Real Sun Breathing Glow & Lens Flare Rotation */
+@keyframes sunPulse {
+  0% {
+    transform: scale(0.96);
+    opacity: 0.88;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.96);
+    opacity: 0.88;
+  }
+}
+
+.animate-sun-pulse {
+  animation: sunPulse 5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes sunRaysSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-sun-rays-spin {
+  animation: sunRaysSpin 55s linear infinite;
+  will-change: transform;
+}
+
+@keyframes flareShimmer {
+  0% {
+    transform: scaleX(0.94);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scaleX(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(0.94);
+    opacity: 0.85;
+  }
+}
+
+.animate-flare-shimmer {
+  animation: flareShimmer 3.5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+
 
