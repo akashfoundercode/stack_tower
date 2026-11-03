@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { GameState, BetHistoryItem } from '../types/game';
+import { GameState, BetHistoryItem, GameDifficulty } from '../types/game';
 import { MobileHeader } from '../components/MobileHeader';
 import { FullscreenGameScene } from '../components/FullscreenGameScene';
 import { MobileBettingOverlay } from '../components/MobileBettingOverlay';
@@ -27,6 +27,9 @@ export const GamePage: React.FC = () => {
   });
 
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+
+  // Game Difficulty Selection: EASY | MEDIUM | HARD
+  const [difficulty, setDifficulty] = useState<GameDifficulty>('MEDIUM');
 
   // Active Game State
   const [gameState, setGameState] = useState<GameState>('IDLE');
@@ -210,6 +213,7 @@ export const GamePage: React.FC = () => {
         {/* Layer 1: Full-Screen Immersive Canvas Game Scene (stretches across laptop & mobile) */}
         <FullscreenGameScene
           gameState={gameState}
+          difficulty={difficulty}
           onStackSuccess={handleStackSuccess}
           onGameOver={handleGameOver}
           onPerfectStack={handlePerfectStack}
@@ -245,6 +249,8 @@ export const GamePage: React.FC = () => {
               level={currentLevel}
               demoBalance={demoBalance}
               dropTimeLeft={dropTimeLeft}
+              difficulty={difficulty}
+              onDifficultyChange={(mode) => setDifficulty(mode)}
             />
           </div>
         </footer>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { FallingDebris } from '../types/game';
+import { SafeGameImage } from './TowerBlock';
 
 interface FallingBlockProps {
   debrisList: FallingDebris[];
@@ -22,7 +23,7 @@ export const FallingBlock: React.FC<FallingBlockProps> = ({ debrisList }) => {
             transformOrigin: item.direction === 'left' ? 'bottom left' : 'bottom right',
           }}
         >
-          <img
+          <SafeGameImage
             src={item.image}
             alt="Falling obstacle"
             className="w-full h-full object-fill object-bottom drop-shadow-2xl"

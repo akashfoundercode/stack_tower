@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { BlockColorTheme } from '../types/game';
 import { BASE_BLOCK_WIDTH, BLOCK_HEIGHT } from '../utils/gamePhysics';
 import bottomShopImg from '../assets/FRAMES/BOTTOMSHOP.png';
@@ -6,6 +6,47 @@ import obs1 from '../assets/obstacle/obs1.png';
 import obs2 from '../assets/obstacle/obs2.png';
 import obs3 from '../assets/obstacle/obs3.png';
 import obs4 from '../assets/obstacle/obs4.png';
+
+// Resilient mobile image loader with auto-retry on network disconnect / memory drop
+export const SafeGameImage: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> = ({
+  src,
+  alt,
+  className,
+  style,
+  ...props
+}) => {
+  const [imgSrc, setImgSrc] = useState<string | undefined>(src);
+  const retriesRef = useRef<number>(0);
+
+  useEffect(() => {
+    setImgSrc(src);
+    retriesRef.current = 0;
+  }, [src]);
+
+  const handleError = () => {
+    if (retriesRef.current < 3 && src) {
+      retriesRef.current += 1;
+      const delay = retriesRef.current * 300;
+      setTimeout(() => {
+        const sep = src.includes('?') ? '&' : '?';
+        setImgSrc(`${src}${sep}retry=${retriesRef.current}_${Date.now()}`);
+      }, delay);
+    }
+  };
+
+  return (
+    <img
+      {...props}
+      src={imgSrc}
+      alt={alt}
+      className={className}
+      style={style}
+      onError={handleError}
+      loading="eager"
+      decoding="async"
+    />
+  );
+};
 
 // Exact configurations for each obstacle matching its 100% natural aspect ratio
 // Unified standard width (148px) matching the PNG image size and the straight guide corridor edge-to-edge!
@@ -60,8 +101,8 @@ export const TowerBlock: React.FC<TowerBlockProps> = ({
           transform: 'translateX(-12px)',
         }}
       >
-        {/* Exact User Uploaded Image */}
-        <img
+        {/* Exact User Uploaded Image with Auto-Retry */}
+        <SafeGameImage
           src={bottomShopImg}
           alt="Base Shop"
           className="w-full h-full object-contain object-bottom"
@@ -82,8 +123,8 @@ export const TowerBlock: React.FC<TowerBlockProps> = ({
         height: `${height}px`,
       }}
     >
-      {/* Obstacle Image: object-fill with exact matching ratio ensures 0 gap and 0 distortion */}
-      <img
+      {/* Obstacle Image: object-fill with exact matching ratio & auto-retry on mobile */}
+      <SafeGameImage
         src={obs.img}
         alt={`Obstacle Level ${level}`}
         className="w-full h-full object-fill object-bottom pointer-events-none drop-shadow-md"

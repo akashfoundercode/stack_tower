@@ -1,4 +1,4 @@
-import { PlacementResult } from '../types/game';
+import { PlacementResult, GameDifficulty } from '../types/game';
 
 // Configuration
 export const BASE_BLOCK_WIDTH = 148; // standard obstacle PNG width in px
@@ -11,18 +11,49 @@ export interface DifficultyParams {
   maxSwingAngle: number; // degrees pendulum tilt
   sweepTravel: number; // horizontal trolley travel in px
   safeOffsetRatio: number; // ratio of target block width allowed before toppling
-  maxSafeOffset: number; // computed pixel threshold for 140px base block
+  maxSafeOffset: number; // computed pixel threshold for base block
   greatThreshold: number; // pixel offset for GREAT
   goodThreshold: number; // pixel offset for GOOD
 }
 
 /**
- * Constant smooth swing speed and natural pendulum tilt across ALL levels:
- * Har baar ek hi steady speed rehti hai - badhti ya ghati nahi!
+ * Difficulty-tuned physics configuration:
+ * EASY: Gentler swing (2.2 rad/s), 13.5° tilt, 24px wide safe zone
+ * MEDIUM: Balanced swing (2.8 rad/s), 16.0° dynamic tilt, 20px safe zone
+ * HARD: Intense swing (3.4 rad/s), 18.5° tilt, 16px precision safe zone
  */
-export function getDifficultyParams(_level: number = 1, isMobile: boolean = false): DifficultyParams {
+export function getDifficultyParams(
+  _level: number = 1,
+  isMobile: boolean = false,
+  difficulty: GameDifficulty = 'MEDIUM'
+): DifficultyParams {
   const baseTravel = isMobile ? 88 : 110;
 
+  if (difficulty === 'EASY') {
+    return {
+      angularSpeed: 2.2, // Smoother, gentler swing
+      maxSwingAngle: 13.5, // 13.5° gentle tilt
+      sweepTravel: Math.round(baseTravel * 0.9),
+      safeOffsetRatio: 0.16,
+      maxSafeOffset: 24, // Generous 24px safe zone
+      greatThreshold: 15,
+      goodThreshold: 24,
+    };
+  }
+
+  if (difficulty === 'HARD') {
+    return {
+      angularSpeed: 3.4, // Faster, lively swing
+      maxSwingAngle: 18.5, // Dynamic 18.5° pendulum tilt
+      sweepTravel: Math.round(baseTravel * 1.1),
+      safeOffsetRatio: 0.11,
+      maxSafeOffset: 16, // Strict 16px safe precision
+      greatThreshold: 9,
+      goodThreshold: 16,
+    };
+  }
+
+  // MEDIUM (Default)
   return {
     angularSpeed: 2.8, // Slightly faster, lively 2.8 rad/s swing speed
     maxSwingAngle: 16.0, // Dynamic 16.0° pendulum tilt
@@ -117,31 +148,40 @@ export const COLOR_THEMES = [
   },
 ];
 
+export const DIFFICULTY_MULTIPLIERS: Record<
+  GameDifficulty,
+  { table: number[]; formulaAfter10: (lvl: number) => number }
+> = {
+  EASY: {
+    // Steady, high win-rate progression:
+    table: [1.0, 1.18, 1.42, 1.75, 2.18, 2.75, 3.50, 4.50, 5.80, 7.50],
+    formulaAfter10: (lvl: number) => Number((10.0 + (lvl - 10) * 2.5).toFixed(2)),
+  },
+  MEDIUM: {
+    // Classic balanced 1win-style progression:
+    table: [1.0, 1.30, 1.70, 2.25, 3.00, 4.10, 5.60, 7.70, 10.60, 14.80],
+    formulaAfter10: (lvl: number) => Number((20.0 + (lvl - 10) * 5.0).toFixed(2)),
+  },
+  HARD: {
+    // High stakes thrill, huge rewards progression:
+    table: [1.0, 1.65, 2.50, 3.85, 5.90, 9.20, 14.50, 23.00, 37.00, 60.00],
+    formulaAfter10: (lvl: number) => Number((95.0 + (lvl - 10) * 25.0).toFixed(2)),
+  },
+};
+
 /**
- * Multiplier progression table:
- * Level 1: 1.20x
- * Level 2: 1.50x
- * Level 3: 1.90x
- * Level 4: 2.40x
- * Level 5: 3.10x
- * Exponential scaling upwards for risk/reward thrill!
+ * Multiplier progression table per difficulty:
+ * - EASY: Higher success rate, gentle progression (1.18x -> 7.50x -> 10x+)
+ * - MEDIUM: Balanced risk/reward (1.30x -> 14.80x -> 20x+)
+ * - HARD: High-stakes adrenaline rush (1.65x -> 60.00x -> 95x+)
  */
-export function calculateMultiplier(level: number): number {
+export function calculateMultiplier(level: number, difficulty: GameDifficulty = 'MEDIUM'): number {
   if (level <= 0) return 1.0;
-  if (level === 1) return 1.25;
-  if (level === 2) return 1.60;
-  if (level === 3) return 2.10;
-  if (level === 4) return 2.75;
-  if (level === 5) return 3.60;
-  if (level === 6) return 4.80;
-  if (level === 7) return 6.50;
-  if (level === 8) return 9.00;
-  if (level === 9) return 12.50;
-  if (level >= 10) {
-    // 15x + 3.5x per additional floor
-    return Number((15 + (level - 10) * 4.5).toFixed(2));
+  const config = DIFFICULTY_MULTIPLIERS[difficulty] || DIFFICULTY_MULTIPLIERS.MEDIUM;
+  if (level < config.table.length) {
+    return config.table[level];
   }
-  return Number((1 + level * 0.35).toFixed(2));
+  return config.formulaAfter10(level);
 }
 
 /**
@@ -160,19 +200,27 @@ export function calculateNextWidth(_level: number): number {
 }
 
 /**
- * Exact 5.0 seconds drop time limit per floor:
- * Player must drop the block within 5 seconds or lose!
+ * Drop time limit per floor tuned by difficulty:
+ * - EASY: 6.0 seconds (relaxed)
+ * - MEDIUM: 5.0 seconds (standard)
+ * - HARD: 4.0 seconds (fast-paced intense)
  */
-export function getDropTimeLimit(_level?: number): number {
-  return 5.0;
+export function getDropTimeLimit(_level?: number, difficulty: GameDifficulty = 'MEDIUM'): number {
+  switch (difficulty) {
+    case 'EASY':
+      return 6.0;
+    case 'HARD':
+      return 4.0;
+    case 'MEDIUM':
+    default:
+      return 5.0;
+  }
 }
 
 /**
  * Realistic Alignment Placement Physics with Progressive Difficulty:
- * - Tolerances tighten across level milestones (Level 1-2, 3-5, 6-8, 9+)
- * - At lower levels, box only misses when hanging outside ~46% of width (~65px)
- * - At higher levels (3rd box, 6th box), allowable offset tightens progressively
- *   to make precision stacking intensely challenging!
+ * - Tolerances tighten across level milestones
+ * - Easy / Medium / Hard adjust safe offset bounds & multiplier boosts
  */
 export function calculatePlacement(
   movingX: number,
@@ -180,12 +228,13 @@ export function calculatePlacement(
   targetX: number,
   _targetWidth: number,
   tolerance = PERFECT_TOLERANCE_PX,
-  level = 1
+  level = 1,
+  difficulty: GameDifficulty = 'MEDIUM'
 ): PlacementResult {
   const diff = movingX - targetX;
   const absDiff = Math.abs(diff);
 
-  const diffParams = getDifficultyParams(level, false);
+  const diffParams = getDifficultyParams(level, false, difficulty);
   const maxSafeOffset = diffParams.maxSafeOffset;
 
   // 1. MISS: Box dropped outside straight corridor guide lines or target threshold
@@ -206,6 +255,7 @@ export function calculatePlacement(
 
   // 2. PERFECT LANDING (Exact center within tolerance <= 5px)
   if (absDiff <= tolerance) {
+    const perfectGain = difficulty === 'HARD' ? 1.0 : difficulty === 'EASY' ? 0.5 : 0.75;
     return {
       status: 'PERFECT',
       overlapWidth: movingWidth,
@@ -215,13 +265,14 @@ export function calculatePlacement(
       cutSide: 'none',
       bonusPoints: 100,
       accuracy: 1.0,
-      multiplierGain: 0.75, // Huge multiplier boost for dead center!
+      multiplierGain: perfectGain,
       feedbackLabel: 'PERFECT!',
     };
   }
 
   // 3. GREAT DROP
   if (absDiff <= diffParams.greatThreshold) {
+    const greatGain = difficulty === 'HARD' ? 0.75 : difficulty === 'EASY' ? 0.35 : 0.5;
     return {
       status: 'GREAT',
       overlapWidth: movingWidth,
@@ -231,13 +282,14 @@ export function calculatePlacement(
       cutSide: 'none',
       bonusPoints: 70,
       accuracy: Math.max(0.7, 1 - absDiff / maxSafeOffset),
-      multiplierGain: 0.50,
+      multiplierGain: greatGain,
       feedbackLabel: 'GREAT DROP!',
     };
   }
 
   // 4. NICE STACK
   if (absDiff <= diffParams.goodThreshold) {
+    const goodGain = difficulty === 'HARD' ? 0.4 : difficulty === 'EASY' ? 0.2 : 0.25;
     return {
       status: 'GOOD',
       overlapWidth: movingWidth,
@@ -247,7 +299,7 @@ export function calculatePlacement(
       cutSide: 'none',
       bonusPoints: 40,
       accuracy: Math.max(0.4, 1 - absDiff / maxSafeOffset),
-      multiplierGain: 0.25,
+      multiplierGain: goodGain,
       feedbackLabel: 'NICE STACK!',
     };
   }

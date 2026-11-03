@@ -62,25 +62,54 @@ export const GameLoader: React.FC<GameLoaderProps> = ({ onLoaded }) => {
       }
     };
 
-    // Preload each game asset with native Image object and decode
+    // Preload each game asset with automatic multi-attempt retry on mobile network failure
     GAME_ASSETS.forEach((asset) => {
-      const img = new Image();
-      img.src = asset.src;
+      let attempts = 0;
+      const maxAttempts = 3;
 
-      const finish = () => {
-        if ('decode' in img) {
-          img.decode().then(handleAssetDone).catch(handleAssetDone);
+      const tryLoad = () => {
+        if (isCancelled) return;
+        const img = new Image();
+        // First attempt uses direct asset URL; retries use cache-busting timestamp
+        const srcUrl = attempts === 0 ? asset.src : `${asset.src}?retry=${attempts}_${Date.now()}`;
+        img.src = srcUrl;
+
+        const onSuccess = () => {
+          if (isCancelled) return;
+          if ('decode' in img) {
+            img.decode().then(handleAssetDone).catch(() => handleAssetDone());
+          } else {
+            handleAssetDone();
+          }
+        };
+
+        const onFailure = () => {
+          if (isCancelled) return;
+          attempts++;
+          if (attempts < maxAttempts) {
+            // Exponential backoff retry for mobile network resilience
+            setTimeout(tryLoad, attempts * 350);
+          } else {
+            // Loader failsafe so game doesn't stall indefinitely if asset unreachable
+            handleAssetDone();
+          }
+        };
+
+        if (img.complete && img.naturalWidth > 0) {
+          onSuccess();
         } else {
-          handleAssetDone();
+          img.onload = () => {
+            if (img.naturalWidth > 0) {
+              onSuccess();
+            } else {
+              onFailure();
+            }
+          };
+          img.onerror = onFailure;
         }
       };
 
-      if (img.complete && img.naturalWidth !== 0) {
-        finish();
-      } else {
-        img.onload = finish;
-        img.onerror = finish; // Fallback so loader never deadlocks if asset has network blip
-      }
+      tryLoad();
     });
 
     return () => {

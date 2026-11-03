@@ -1,5 +1,7 @@
 export type GameState = 'IDLE' | 'PLAYING' | 'CASHED_OUT' | 'GAME_OVER';
 
+export type GameDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
+
 export interface BlockLayer {
   id: number;
   level: number;

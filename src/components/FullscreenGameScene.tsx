@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { BlockLayer, FallingDebris, GameState } from '../types/game';
+import { BlockLayer, FallingDebris, GameState, GameDifficulty } from '../types/game';
 import {
   COLOR_THEMES,
   calculatePlacement,
@@ -17,6 +17,7 @@ import { soundFx } from '../utils/sound';
 
 interface FullscreenGameSceneProps {
   gameState: GameState;
+  difficulty?: GameDifficulty;
   onStackSuccess: (level: number, multiplier: number, bonus: number) => void;
   onGameOver: (finalLevel: number, finalMultiplier: number) => void;
   onPerfectStack: () => void;
@@ -26,6 +27,7 @@ interface FullscreenGameSceneProps {
 
 export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
   gameState,
+  difficulty = 'MEDIUM',
   onStackSuccess,
   onGameOver,
   onPerfectStack,
@@ -166,8 +168,8 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
       swingPhaseRef.current = 0;
       isPlacingRef.current = false;
 
-      // Initialize drop timer for level 1
-      const initialTime = getDropTimeLimit(1);
+      // Initialize drop timer for level 1 tuned to difficulty mode
+      const initialTime = getDropTimeLimit(1, difficulty);
       setDropTimeLeft(initialTime);
       maxDropTimeRef.current = initialTime;
       dropTimerStartTimeRef.current = 0;
@@ -176,7 +178,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
       // Start by lowering the first obstacle down from above the screen!
       startWinchDown();
     }
-  }, [gameState, isMobile, startWinchDown]);
+  }, [gameState, isMobile, difficulty, startWinchDown]);
 
   // Timeout handler: Triggered if player fails to drop before the timer runs out!
   const handleTimeOut = useCallback(() => {
@@ -211,9 +213,9 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
     });
 
     setTimeout(() => {
-      onGameOver(currentLevel - 1, calculateMultiplier(currentLevel - 1));
+      onGameOver(currentLevel - 1, calculateMultiplier(currentLevel - 1, difficulty));
     }, 1100);
-  }, [gameState, currentLevel, isMobile, layers, onGameOver]);
+  }, [gameState, currentLevel, isMobile, layers, difficulty, onGameOver]);
 
   const handleTimeOutRef = useRef(handleTimeOut);
   handleTimeOutRef.current = handleTimeOut;
@@ -275,7 +277,8 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
           topPlacedLayer.x,
           topPlacedLayer.width,
           PERFECT_TOLERANCE_PX,
-          currentLevel
+          currentLevel,
+          difficulty
         );
 
         if (result.status === 'MISS') {
@@ -313,8 +316,17 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
 
         const isPerfect = result.status === 'PERFECT';
 
-        // Multiplier progression
-        const newMultiplier = Number((currentMultiplier + result.multiplierGain).toFixed(2));
+        // Multiplier progression: tuned to difficulty level table + precision bonus
+        const baseTargetMult = calculateMultiplier(currentLevel, difficulty);
+        const perfectBonus = isPerfect
+          ? difficulty === 'HARD'
+            ? 0.35
+            : difficulty === 'MEDIUM'
+            ? 0.20
+            : 0.10
+          : 0;
+        const newMultiplier = Number((baseTargetMult + perfectBonus).toFixed(2));
+        const gain = Number((newMultiplier - currentMultiplier).toFixed(2));
         setCurrentMultiplier(newMultiplier);
 
         const currentCfg = getObstacleForLevel(currentLevel, isMobile);
@@ -323,11 +335,11 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
           0
         );
 
-        // Spawn popping flying number badge on right side of tower (+1.25x / +0.75x)
+        // Spawn popping flying number badge on right side of tower
         const flyId = `fly-${Date.now()}`;
         const newFlyingItem = {
           id: flyId,
-          text: `+${result.multiplierGain.toFixed(2)}x (${newMultiplier}x)`,
+          text: `+${gain > 0 ? gain.toFixed(2) : result.multiplierGain.toFixed(2)}x (${newMultiplier.toFixed(2)}x)`,
           x: result.overlapX + currentCfg.width / 2 + 10, // right side of block
           y: currentStackHeight + 15,
         };
@@ -340,7 +352,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
           soundFx.playPlace(true);
           setFeedbackToast({
             text: 'PERFECT!',
-            subtext: `+${result.multiplierGain.toFixed(2)}x BOOST (${newMultiplier}x)`,
+            subtext: `+${(gain > 0 ? gain : result.multiplierGain).toFixed(2)}x BOOST (${newMultiplier.toFixed(2)}x)`,
             type: 'perfect',
           });
           onPerfectStack();
@@ -348,14 +360,14 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
           soundFx.playPlace(false);
           setFeedbackToast({
             text: 'GREAT DROP!',
-            subtext: `+${result.multiplierGain.toFixed(2)}x BOOST (${newMultiplier}x)`,
+            subtext: `+${(gain > 0 ? gain : result.multiplierGain).toFixed(2)}x BOOST (${newMultiplier.toFixed(2)}x)`,
             type: 'great',
           });
         } else {
           soundFx.playPlace(false);
           setFeedbackToast({
             text: 'NICE STACK!',
-            subtext: `+${result.multiplierGain.toFixed(2)}x BOOST (${newMultiplier}x)`,
+            subtext: `+${(gain > 0 ? gain : result.multiplierGain).toFixed(2)}x BOOST (${newMultiplier.toFixed(2)}x)`,
             type: 'good',
           });
         }
@@ -442,6 +454,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
     onGameOver,
     onPerfectStack,
     isMobile,
+    difficulty,
     startWinchDown,
   ]);
 
@@ -468,11 +481,11 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
       return;
     }
 
-    // Dynamic progressive difficulty parameters based on current level milestone
-    const diffParams = getDifficultyParams(currentLevel, isMobile);
+    // Dynamic progressive difficulty parameters based on current level & selected difficulty mode
+    const diffParams = getDifficultyParams(currentLevel, isMobile, difficulty);
     const SWEEP_TRAVEL = diffParams.sweepTravel; // Travel width across the tower
     const MAX_SWING_ANGLE = diffParams.maxSwingAngle; // degrees dynamic pendulum tilt swing
-    const angularSpeed = diffParams.angularSpeed; // rad/s swing speed (escalates rapidly at L3, L6, L9+)
+    const angularSpeed = diffParams.angularSpeed; // rad/s swing speed
 
     const updateFrame = (timestamp: number) => {
       if (!lastTimeRef.current) lastTimeRef.current = timestamp;
@@ -502,7 +515,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
           swingPhaseRef.current = 0;
 
           // Start the drop countdown timer!
-          const timeLimit = getDropTimeLimit(currentLevel);
+          const timeLimit = getDropTimeLimit(currentLevel, difficulty);
           maxDropTimeRef.current = timeLimit;
           setDropTimeLeft(timeLimit);
           dropTimerStartTimeRef.current = performance.now();
@@ -563,7 +576,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
         cancelAnimationFrame(dropAnimRef.current);
       }
     };
-  }, [gameState, currentLevel, isMobile]);
+  }, [gameState, currentLevel, isMobile, difficulty]);
 
   const activeTheme = COLOR_THEMES[currentLevel % COLOR_THEMES.length];
 

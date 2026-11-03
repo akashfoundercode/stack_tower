@@ -58,13 +58,28 @@ describe('Tower Stacking Physics & Mechanics', () => {
     expect(p9.maxSwingAngle).toBe(16.0);
   });
 
-  it('escalates multiplier progressively as tower grows', () => {
-    expect(calculateMultiplier(0)).toBe(1.0);
-    expect(calculateMultiplier(1)).toBe(1.25);
-    expect(calculateMultiplier(2)).toBe(1.6);
-    expect(calculateMultiplier(5)).toBe(3.6);
-    expect(calculateMultiplier(10)).toBe(15.0);
-    expect(calculateMultiplier(12)).toBeGreaterThan(calculateMultiplier(10));
+  it('escalates multiplier progressively as tower grows with different rates per difficulty mode', () => {
+    // Medium (Default)
+    expect(calculateMultiplier(0, 'MEDIUM')).toBe(1.0);
+    expect(calculateMultiplier(1, 'MEDIUM')).toBe(1.30);
+    expect(calculateMultiplier(2, 'MEDIUM')).toBe(1.70);
+    expect(calculateMultiplier(5, 'MEDIUM')).toBe(4.10);
+    expect(calculateMultiplier(10, 'MEDIUM')).toBe(20.0);
+    expect(calculateMultiplier(12, 'MEDIUM')).toBeGreaterThan(calculateMultiplier(10, 'MEDIUM'));
+
+    // Easy mode: safe progression
+    expect(calculateMultiplier(1, 'EASY')).toBe(1.18);
+    expect(calculateMultiplier(5, 'EASY')).toBe(2.75);
+    expect(calculateMultiplier(10, 'EASY')).toBe(10.0);
+
+    // Hard mode: thrilling high payouts!
+    expect(calculateMultiplier(1, 'HARD')).toBe(1.65);
+    expect(calculateMultiplier(5, 'HARD')).toBe(9.20);
+    expect(calculateMultiplier(10, 'HARD')).toBe(95.0);
+
+    // Hard > Medium > Easy at all levels
+    expect(calculateMultiplier(3, 'HARD')).toBeGreaterThan(calculateMultiplier(3, 'MEDIUM'));
+    expect(calculateMultiplier(3, 'MEDIUM')).toBeGreaterThan(calculateMultiplier(3, 'EASY'));
   });
 
   it('keeps speed constant across all levels', () => {
@@ -77,14 +92,24 @@ describe('Tower Stacking Physics & Mechanics', () => {
     expect(speedLevel20).toBe(150);
   });
 
-  it('allocates drop countdown time limit of exactly 5.0 seconds per floor', () => {
-    const timeL1 = getDropTimeLimit(1);
-    const timeL4 = getDropTimeLimit(4);
-    const timeL10 = getDropTimeLimit(10);
+  it('allocates drop countdown time limit based on difficulty', () => {
+    expect(getDropTimeLimit(1, 'EASY')).toBe(6.0);
+    expect(getDropTimeLimit(1, 'MEDIUM')).toBe(5.0);
+    expect(getDropTimeLimit(1, 'HARD')).toBe(4.0);
+  });
 
-    expect(timeL1).toBe(5.0);
-    expect(timeL4).toBe(5.0);
-    expect(timeL10).toBe(5.0);
+  it('tunes swing physics parameters per difficulty mode', () => {
+    const easyParams = getDifficultyParams(1, false, 'EASY');
+    const medParams = getDifficultyParams(1, false, 'MEDIUM');
+    const hardParams = getDifficultyParams(1, false, 'HARD');
+
+    expect(easyParams.angularSpeed).toBe(2.2);
+    expect(medParams.angularSpeed).toBe(2.8);
+    expect(hardParams.angularSpeed).toBe(3.4);
+
+    expect(easyParams.maxSafeOffset).toBe(24);
+    expect(medParams.maxSafeOffset).toBe(20);
+    expect(hardParams.maxSafeOffset).toBe(16);
   });
 });
 

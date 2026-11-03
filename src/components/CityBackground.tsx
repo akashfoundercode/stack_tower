@@ -1,4 +1,5 @@
 import React from 'react';
+import { SafeGameImage } from './TowerBlock';
 import balloon1Img from '../assets/games/baloon1.png';
 import balloon2Img from '../assets/games/balloon2.png';
 import frameBg from '../assets/FRAMES/FRAMES (1).png';
@@ -31,7 +32,7 @@ const CityBackgroundComponent: React.FC<CityBackgroundProps> = ({ cameraY = 0 })
       >
         {/* Sky Level 4 (Very High Atmosphere) - Infinite Blue Sky Loop */}
         <div className="absolute inset-x-0 bottom-[calc(400%-8px)] h-full w-full pointer-events-none">
-          <img
+          <SafeGameImage
             src={solidBlueSkyBg}
             alt="Sky Level 4"
             className="w-full h-full object-cover object-bottom"
@@ -40,7 +41,7 @@ const CityBackgroundComponent: React.FC<CityBackgroundProps> = ({ cameraY = 0 })
 
         {/* Sky Level 3 (High Sky) - Infinite Blue Sky Loop */}
         <div className="absolute inset-x-0 bottom-[calc(300%-6px)] h-full w-full pointer-events-none">
-          <img
+          <SafeGameImage
             src={solidBlueSkyBg}
             alt="Sky Level 3"
             className="w-full h-full object-cover object-bottom"
@@ -49,7 +50,7 @@ const CityBackgroundComponent: React.FC<CityBackgroundProps> = ({ cameraY = 0 })
 
         {/* Sky Level 2 (Mid Sky) - Infinite Blue Sky Loop */}
         <div className="absolute inset-x-0 bottom-[calc(200%-4px)] h-full w-full pointer-events-none">
-          <img
+          <SafeGameImage
             src={solidBlueSkyBg}
             alt="Sky Level 2"
             className="w-full h-full object-cover object-bottom"
@@ -58,7 +59,7 @@ const CityBackgroundComponent: React.FC<CityBackgroundProps> = ({ cameraY = 0 })
 
         {/* Sky Level 1 (Upper Sky above Ground Frame) - Infinite Blue Sky Loop */}
         <div className="absolute inset-x-0 bottom-[calc(100%-2px)] h-full w-full pointer-events-none z-10">
-          <img
+          <SafeGameImage
             src={solidBlueSkyBg}
             alt="Upper Sky Frame 1"
             className="w-full h-full object-cover object-bottom"
@@ -67,7 +68,7 @@ const CityBackgroundComponent: React.FC<CityBackgroundProps> = ({ cameraY = 0 })
 
         {/* Ground Frame 1 (FRAMES (1).png) with Sun Light Reflections Right on the Center Sun */}
         <div className="relative w-full h-full pointer-events-none">
-          <img
+          <SafeGameImage
             src={frameBg}
             alt="Ground World Background Frame"
             className="w-full h-full object-cover object-bottom relative z-10"
