@@ -38,7 +38,6 @@ export const GamePage: React.FC = () => {
   const [currentLevel, setCurrentLevel] = useState<number>(0);
   const [currentMultiplier, setCurrentMultiplier] = useState<number>(1.0);
   const [, setScore] = useState<number>(0);
-  const [dropTimeLeft, setDropTimeLeft] = useState<number>(5.0);
 
   // Trigger for build
   const [buildTrigger, setBuildTrigger] = useState<number>(0);
@@ -197,10 +196,6 @@ export const GamePage: React.FC = () => {
     setSoundEnabled(next);
   };
 
-  const handleTimerTick = useCallback((left: number) => {
-    setDropTimeLeft(left);
-  }, []);
-
   return (
     <div className="w-screen h-[100dvh] overflow-hidden bg-[#097cd9] flex flex-col items-center justify-between">
       {/* Game Asset Preloader: Ensures all high-res PNG images & backgrounds are 100% loaded before reveal */}
@@ -218,7 +213,6 @@ export const GamePage: React.FC = () => {
           onGameOver={handleGameOver}
           onPerfectStack={handlePerfectStack}
           buildTrigger={buildTrigger}
-          onTimerTick={handleTimerTick}
         />
 
         {/* Layer 2: Top Bar Header (Screenshot Style dark-striped navbar) */}
@@ -230,6 +224,9 @@ export const GamePage: React.FC = () => {
             onToggleSound={handleToggleSound}
             onOpenHistory={() => setShowHistoryModal(true)}
             onOpenTutorial={() => setShowTutorial(true)}
+            difficulty={difficulty}
+            onDifficultyChange={setDifficulty}
+            gameState={gameState}
           />
         </header>
 
@@ -248,9 +245,7 @@ export const GamePage: React.FC = () => {
               multiplier={currentMultiplier}
               level={currentLevel}
               demoBalance={demoBalance}
-              dropTimeLeft={dropTimeLeft}
               difficulty={difficulty}
-              onDifficultyChange={(mode) => setDifficulty(mode)}
             />
           </div>
         </footer>

@@ -14,9 +14,7 @@ interface MobileBettingOverlayProps {
   multiplier: number;
   level: number;
   demoBalance: number;
-  dropTimeLeft?: number;
   difficulty?: GameDifficulty;
-  onDifficultyChange?: (mode: GameDifficulty) => void;
 }
 
 const MobileBettingOverlayComponent: React.FC<MobileBettingOverlayProps> = ({
@@ -29,9 +27,7 @@ const MobileBettingOverlayComponent: React.FC<MobileBettingOverlayProps> = ({
   multiplier,
   level,
   demoBalance,
-  dropTimeLeft,
   difficulty = 'MEDIUM',
-  onDifficultyChange,
 }) => {
   const isPlaying = gameState === 'PLAYING';
   const potentialPayout = Math.floor(betAmount * multiplier * 100) / 100;
@@ -64,87 +60,6 @@ const MobileBettingOverlayComponent: React.FC<MobileBettingOverlayProps> = ({
             'repeating-linear-gradient(45deg, #f59e0b, #f59e0b 14px, #111827 14px, #111827 28px)',
         }}
       />
-
-      {/* 3-Difficulty Level Selector Bar: EASY | MEDIUM | HARD with distinct win amounts */}
-      <div className="w-full flex items-center justify-between gap-1.5 p-1 bg-stone-900/90 backdrop-blur-md rounded-2xl border border-stone-700/80 shadow-lg">
-        {/* EASY BUTTON */}
-        <button
-          disabled={isPlaying}
-          onClick={() => {
-            soundFx.playClick();
-            onDifficultyChange?.('EASY');
-          }}
-          className={`flex-1 py-1 sm:py-1.5 px-1 rounded-xl transition-all duration-150 flex flex-col items-center justify-center relative overflow-hidden ${
-            difficulty === 'EASY'
-              ? 'bg-gradient-to-b from-emerald-500 to-emerald-700 text-white shadow-[0_2px_10px_rgba(16,185,129,0.5)] border border-emerald-300/80 font-black scale-[1.02]'
-              : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800/60 border border-transparent font-medium opacity-80'
-          }`}
-        >
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] sm:text-xs">🛡️</span>
-            <span className="text-xs sm:text-sm font-extrabold tracking-wider">EASY</span>
-          </div>
-          <span
-            className={`text-[9px] sm:text-[10px] font-mono font-bold ${
-              difficulty === 'EASY' ? 'text-emerald-100' : 'text-stone-400'
-            }`}
-          >
-            ₹{(betAmount * calculateMultiplier(1, 'EASY')).toFixed(0)} ({calculateMultiplier(1, 'EASY')}x)
-          </span>
-        </button>
-
-        {/* MEDIUM BUTTON */}
-        <button
-          disabled={isPlaying}
-          onClick={() => {
-            soundFx.playClick();
-            onDifficultyChange?.('MEDIUM');
-          }}
-          className={`flex-1 py-1 sm:py-1.5 px-1 rounded-xl transition-all duration-150 flex flex-col items-center justify-center relative overflow-hidden ${
-            difficulty === 'MEDIUM'
-              ? 'bg-gradient-to-b from-amber-500 to-amber-700 text-white shadow-[0_2px_10px_rgba(245,158,11,0.5)] border border-amber-300/80 font-black scale-[1.02]'
-              : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800/60 border border-transparent font-medium opacity-80'
-          }`}
-        >
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] sm:text-xs">⚡</span>
-            <span className="text-xs sm:text-sm font-extrabold tracking-wider">MEDIUM</span>
-          </div>
-          <span
-            className={`text-[9px] sm:text-[10px] font-mono font-bold ${
-              difficulty === 'MEDIUM' ? 'text-amber-100' : 'text-stone-400'
-            }`}
-          >
-            ₹{(betAmount * calculateMultiplier(1, 'MEDIUM')).toFixed(0)} ({calculateMultiplier(1, 'MEDIUM')}x)
-          </span>
-        </button>
-
-        {/* HARD BUTTON */}
-        <button
-          disabled={isPlaying}
-          onClick={() => {
-            soundFx.playClick();
-            onDifficultyChange?.('HARD');
-          }}
-          className={`flex-1 py-1 sm:py-1.5 px-1 rounded-xl transition-all duration-150 flex flex-col items-center justify-center relative overflow-hidden ${
-            difficulty === 'HARD'
-              ? 'bg-gradient-to-b from-rose-600 to-red-800 text-white shadow-[0_2px_10px_rgba(239,68,68,0.55)] border border-rose-300/80 font-black scale-[1.02]'
-              : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800/60 border border-transparent font-medium opacity-80'
-          }`}
-        >
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] sm:text-xs">🔥</span>
-            <span className="text-xs sm:text-sm font-extrabold tracking-wider">HARD</span>
-          </div>
-          <span
-            className={`text-[9px] sm:text-[10px] font-mono font-bold ${
-              difficulty === 'HARD' ? 'text-rose-100' : 'text-stone-400'
-            }`}
-          >
-            ₹{(betAmount * calculateMultiplier(1, 'HARD')).toFixed(0)} ({calculateMultiplier(1, 'HARD')}x)
-          </span>
-        </button>
-      </div>
 
       {/* Betting Control Container:
           Mobile: Stacked rows (ALL IN / Stepper / x2 on top, BUILD on bottom)
@@ -354,19 +269,10 @@ const MobileBettingOverlayComponent: React.FC<MobileBettingOverlayProps> = ({
                   </div>
 
                   {/* Center Action Label */}
-                  <div className="flex-1 flex items-center justify-center min-w-0 px-1 gap-1.5">
-                    <span className="text-xs min-[360px]:text-sm sm:text-base md:text-xl font-black tracking-wider text-white uppercase drop-shadow-[0_2px_4px_rgba(69,26,3,0.8)] font-mono whitespace-nowrap animate-pulse">
-                      {isPlaying && dropTimeLeft !== undefined && dropTimeLeft <= 3.0 ? 'DROP NOW!' : 'DROP / BUILD'}
+                  <div className="flex-1 flex items-center justify-center min-w-0 px-1">
+                    <span className="text-sm min-[360px]:text-base sm:text-lg md:text-2xl font-black tracking-widest text-white uppercase drop-shadow-[0_2px_4px_rgba(69,26,3,0.8)] font-mono whitespace-nowrap">
+                      BUILD
                     </span>
-                    {isPlaying && dropTimeLeft !== undefined && (
-                      <span className={`text-[11px] sm:text-xs font-black font-mono px-1.5 py-0.5 rounded shadow-sm ${
-                        dropTimeLeft <= 3.0
-                          ? 'bg-rose-600 text-white animate-pulse'
-                          : 'bg-black/35 text-amber-950 font-black'
-                      }`}>
-                        {dropTimeLeft.toFixed(1)}s
-                      </span>
-                    )}
                   </div>
 
                   {/* Right metallic screw rivet */}
