@@ -1,7 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { BlockLayer, FallingDebris, GameState } from '../types/game';
 import {
-  BASE_BLOCK_WIDTH,
   COLOR_THEMES,
   calculatePlacement,
   getDifficultyParams,
@@ -554,53 +553,6 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
         </div>
       )}
 
-      {/* Ek Seedhi Fixed Guide Line Corridor (Matching actual Obstacle PNG image width edge-to-edge) */}
-      {gameState === 'PLAYING' && (() => {
-        const currentDiffParams = getDifficultyParams(currentLevel, isMobile);
-        const isOutOfBounds = Math.abs(movingX) > currentDiffParams.maxSafeOffset;
-
-        return (
-          <div
-            className="absolute inset-x-0 pointer-events-none z-10 flex justify-center select-none"
-            style={{
-              top: `${SWING_TOP + 45}px`,
-              bottom: '176px',
-            }}
-          >
-            <div
-              className="relative h-full pointer-events-none"
-              style={{ width: `${BASE_BLOCK_WIDTH}px` }}
-            >
-              {/* Left Straight Boundary Line */}
-              <div
-                className={`absolute left-0 top-0 bottom-0 w-[2px] border-l-2 border-dashed transition-colors duration-150 ${
-                  isOutOfBounds
-                    ? 'border-rose-500/90 drop-shadow-[0_0_8px_#f43f5e]'
-                    : 'border-yellow-300/80 drop-shadow-[0_0_6px_#facc15]'
-                }`}
-              />
-
-              {/* Right Straight Boundary Line */}
-              <div
-                className={`absolute right-0 top-0 bottom-0 w-[2px] border-r-2 border-dashed transition-colors duration-150 ${
-                  isOutOfBounds
-                    ? 'border-rose-500/90 drop-shadow-[0_0_8px_#f43f5e]'
-                    : 'border-yellow-300/80 drop-shadow-[0_0_6px_#facc15]'
-                }`}
-              />
-
-              {/* Subtle corridor glow tint */}
-              <div
-                className={`absolute inset-0 transition-colors duration-150 ${
-                  isOutOfBounds
-                    ? 'bg-rose-500/[0.04]'
-                    : 'bg-yellow-300/[0.03]'
-                }`}
-              />
-            </div>
-          </div>
-        );
-      })()}
 
       {/* Camera Stage: Sits comfortably on mobile and slightly lowered on desktop */}
       <div
