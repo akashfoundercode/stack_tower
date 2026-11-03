@@ -6,11 +6,15 @@ import { MobileBettingOverlay } from '../components/MobileBettingOverlay';
 import { ResultModal } from '../components/ResultModal';
 import { HistoryModal } from '../components/HistoryModal';
 import { TutorialModal } from '../components/TutorialModal';
+import { GameLoader } from '../components/GameLoader';
 import { soundFx } from '../utils/sound';
 
 const INITIAL_WALLET_BALANCE = 10000;
 
 export const GamePage: React.FC = () => {
+  // Preloader State: Game only reveals after all images are 100% loaded and decoded
+  const [isAssetsLoaded, setIsAssetsLoaded] = useState<boolean>(false);
+
   // Demo Wallet & Storage
   const [demoBalance, setDemoBalance] = useState<number>(() => {
     const saved = localStorage.getItem('stack_tower_balance');
@@ -191,6 +195,11 @@ export const GamePage: React.FC = () => {
 
   return (
     <div className="w-screen h-[100dvh] overflow-hidden bg-[#097cd9] flex flex-col items-center justify-between">
+      {/* Game Asset Preloader: Ensures all high-res PNG images & backgrounds are 100% loaded before reveal */}
+      {!isAssetsLoaded && (
+        <GameLoader onLoaded={() => setIsAssetsLoaded(true)} />
+      )}
+
       {/* Fullscreen responsive container: 100% width on laptop/desktop & mobile */}
       <div className="relative w-full h-full overflow-hidden flex flex-col justify-between">
         {/* Layer 1: Full-Screen Immersive Canvas Game Scene (stretches across laptop & mobile) */}

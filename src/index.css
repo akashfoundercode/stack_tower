@@ -12,6 +12,24 @@
 }
 
 /* Custom animations & glow */
+@keyframes pendulum {
+  0%, 100% {
+    transform: rotate(14deg);
+  }
+  50% {
+    transform: rotate(-14deg);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
 @keyframes pulseGlow {
   0% {
     filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.4));
