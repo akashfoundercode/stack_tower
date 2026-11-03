@@ -13,6 +13,7 @@ interface MobileBettingOverlayProps {
   multiplier: number;
   level: number;
   demoBalance: number;
+  dropTimeLeft?: number;
 }
 
 export const MobileBettingOverlay: React.FC<MobileBettingOverlayProps> = ({
@@ -25,6 +26,7 @@ export const MobileBettingOverlay: React.FC<MobileBettingOverlayProps> = ({
   multiplier,
   level,
   demoBalance,
+  dropTimeLeft,
 }) => {
   const isPlaying = gameState === 'PLAYING';
   const potentialPayout = Math.floor(betAmount * multiplier * 100) / 100;
@@ -263,10 +265,19 @@ export const MobileBettingOverlay: React.FC<MobileBettingOverlayProps> = ({
                   </div>
 
                   {/* Center Action Label */}
-                  <div className="flex-1 flex items-center justify-center min-w-0 px-1">
+                  <div className="flex-1 flex items-center justify-center min-w-0 px-1 gap-1.5">
                     <span className="text-xs min-[360px]:text-sm sm:text-base md:text-xl font-black tracking-wider text-white uppercase drop-shadow-[0_2px_4px_rgba(69,26,3,0.8)] font-mono whitespace-nowrap animate-pulse">
-                      DROP / BUILD
+                      {isPlaying && dropTimeLeft !== undefined && dropTimeLeft <= 3.0 ? 'DROP NOW!' : 'DROP / BUILD'}
                     </span>
+                    {isPlaying && dropTimeLeft !== undefined && (
+                      <span className={`text-[11px] sm:text-xs font-black font-mono px-1.5 py-0.5 rounded shadow-sm ${
+                        dropTimeLeft <= 3.0
+                          ? 'bg-rose-600 text-white animate-pulse'
+                          : 'bg-black/35 text-amber-950 font-black'
+                      }`}>
+                        {dropTimeLeft.toFixed(1)}s
+                      </span>
+                    )}
                   </div>
 
                   {/* Right metallic screw rivet */}

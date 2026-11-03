@@ -35,6 +35,7 @@ export const GamePage: React.FC = () => {
   const [currentLevel, setCurrentLevel] = useState<number>(0);
   const [currentMultiplier, setCurrentMultiplier] = useState<number>(1.0);
   const [, setScore] = useState<number>(0);
+  const [dropTimeLeft, setDropTimeLeft] = useState<number>(5.0);
 
   // Trigger for build
   const [buildTrigger, setBuildTrigger] = useState<number>(0);
@@ -209,6 +210,9 @@ export const GamePage: React.FC = () => {
           onGameOver={handleGameOver}
           onPerfectStack={handlePerfectStack}
           buildTrigger={buildTrigger}
+          onTimerTick={(left) => {
+            setDropTimeLeft(left);
+          }}
         />
 
         {/* Layer 2: Top Bar Header (Screenshot Style dark-striped navbar) */}
@@ -238,6 +242,7 @@ export const GamePage: React.FC = () => {
               multiplier={currentMultiplier}
               level={currentLevel}
               demoBalance={demoBalance}
+              dropTimeLeft={dropTimeLeft}
             />
           </div>
         </footer>

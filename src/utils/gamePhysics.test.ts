@@ -4,6 +4,7 @@ import {
   calculateMultiplier,
   calculateSpeed,
   getDifficultyParams,
+  getDropTimeLimit,
   PERFECT_TOLERANCE_PX,
 } from './gamePhysics';
 
@@ -38,50 +39,23 @@ describe('Tower Stacking Physics & Mechanics', () => {
     expect(result.status).toBe('MISS');
   });
 
-  it('tightens safe landing tolerance at 3rd box milestone (Level 3 misses at 18px)', () => {
-    // At level 1, 18px was caught safely inside the lines (<=20px)
-    const l1Result = calculatePlacement(18, 140, 0, 140, PERFECT_TOLERANCE_PX, 1);
-    expect(l1Result.status).toBe('GOOD');
-
-    // At level 3 (3rd box), safe margin is tightened to 16px -> 18px becomes a MISS
-    const l3Result = calculatePlacement(18, 140, 0, 140, PERFECT_TOLERANCE_PX, 3);
-    expect(l3Result.status).toBe('MISS');
-
-    // Within safe margin (e.g. 14px) is still successfully stacked
-    const l3Good = calculatePlacement(14, 140, 0, 140, PERFECT_TOLERANCE_PX, 3);
-    expect(l3Good.status).toBe('GOOD');
-  });
-
-  it('rapidly escalates difficulty at 6th box milestone (Level 6 misses at 15px)', () => {
-    // At level 3, 14px was safe (<=16px limit)
-    const l3Result = calculatePlacement(14, 140, 0, 140, PERFECT_TOLERANCE_PX, 3);
-    expect(l3Result.status).toBe('GOOD');
-
-    // At level 6 (6th box), safe margin is tightened to 13px -> 15px becomes a MISS
-    const l6Result = calculatePlacement(15, 140, 0, 140, PERFECT_TOLERANCE_PX, 6);
-    expect(l6Result.status).toBe('MISS');
-  });
-
-  it('progressively escalates angular speed and swing tilt across milestones (L1 -> L3 -> L6 -> L9)', () => {
+  it('maintains constant steady speed and tilt across all levels without increasing or decreasing', () => {
     const p1 = getDifficultyParams(1);
     const p3 = getDifficultyParams(3);
     const p6 = getDifficultyParams(6);
     const p9 = getDifficultyParams(9);
 
-    // Speed progression
-    expect(p3.angularSpeed).toBeGreaterThan(p1.angularSpeed);
-    expect(p6.angularSpeed).toBeGreaterThan(p3.angularSpeed);
-    expect(p9.angularSpeed).toBeGreaterThan(p6.angularSpeed);
+    // Constant speed across all levels
+    expect(p1.angularSpeed).toBe(2.2);
+    expect(p3.angularSpeed).toBe(2.2);
+    expect(p6.angularSpeed).toBe(2.2);
+    expect(p9.angularSpeed).toBe(2.2);
 
-    // Tilt angle progression
-    expect(p3.maxSwingAngle).toBeGreaterThan(p1.maxSwingAngle);
-    expect(p6.maxSwingAngle).toBeGreaterThan(p3.maxSwingAngle);
-    expect(p9.maxSwingAngle).toBeGreaterThan(p6.maxSwingAngle);
-
-    // Safe offset ratio progressively tightens
-    expect(p1.safeOffsetRatio).toBeGreaterThan(p3.safeOffsetRatio);
-    expect(p3.safeOffsetRatio).toBeGreaterThan(p6.safeOffsetRatio);
-    expect(p6.safeOffsetRatio).toBeGreaterThan(p9.safeOffsetRatio);
+    // Constant tilt angle across all levels
+    expect(p1.maxSwingAngle).toBe(14.5);
+    expect(p3.maxSwingAngle).toBe(14.5);
+    expect(p6.maxSwingAngle).toBe(14.5);
+    expect(p9.maxSwingAngle).toBe(14.5);
   });
 
   it('escalates multiplier progressively as tower grows', () => {
@@ -93,13 +67,24 @@ describe('Tower Stacking Physics & Mechanics', () => {
     expect(calculateMultiplier(12)).toBeGreaterThan(calculateMultiplier(10));
   });
 
-  it('increases speed with level within reasonable bounds', () => {
+  it('keeps speed constant across all levels', () => {
     const speedLevel1 = calculateSpeed(1);
     const speedLevel5 = calculateSpeed(5);
     const speedLevel20 = calculateSpeed(20);
 
-    expect(speedLevel5).toBeGreaterThan(speedLevel1);
-    expect(speedLevel20).toBeLessThanOrEqual(580);
+    expect(speedLevel1).toBe(150);
+    expect(speedLevel5).toBe(150);
+    expect(speedLevel20).toBe(150);
+  });
+
+  it('allocates drop countdown time limit of exactly 5.0 seconds per floor', () => {
+    const timeL1 = getDropTimeLimit(1);
+    const timeL4 = getDropTimeLimit(4);
+    const timeL10 = getDropTimeLimit(10);
+
+    expect(timeL1).toBe(5.0);
+    expect(timeL4).toBe(5.0);
+    expect(timeL10).toBe(5.0);
   });
 });
 

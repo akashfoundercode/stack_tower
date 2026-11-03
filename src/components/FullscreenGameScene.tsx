@@ -3,7 +3,9 @@ import { BlockLayer, FallingDebris, GameState } from '../types/game';
 import {
   COLOR_THEMES,
   calculatePlacement,
+  calculateMultiplier,
   getDifficultyParams,
+  getDropTimeLimit,
   PERFECT_TOLERANCE_PX,
 } from '../utils/gamePhysics';
 import { CityBackground } from './CityBackground';
@@ -19,6 +21,7 @@ interface FullscreenGameSceneProps {
   onGameOver: (finalLevel: number, finalMultiplier: number) => void;
   onPerfectStack: () => void;
   buildTrigger: number;
+  onTimerTick?: (timeLeft: number) => void;
 }
 
 export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
@@ -27,6 +30,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
   onGameOver,
   onPerfectStack,
   buildTrigger,
+  onTimerTick,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const towerRef = useRef<HTMLDivElement>(null);
@@ -82,6 +86,12 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
   // Dropping animation state: Box starts suspended from fixed top hook (SWING_TOP = 65px)
   const [dropY, setDropY] = useState<number>(SWING_TOP);
   const [isDropping, setIsDropping] = useState<boolean>(false);
+
+  // Drop countdown timer state (Itne time me drop karo warna haar jaoge!)
+  const [dropTimeLeft, setDropTimeLeft] = useState<number>(5.0);
+  const dropTimerStartTimeRef = useRef<number>(0);
+  const maxDropTimeRef = useRef<number>(5.0);
+  const lastTickSecondRef = useRef<number>(-1);
 
   // Winch-down descent animation (Crane lowers obstacle smoothly from above the ceiling!)
   const [winchY, setWinchY] = useState<number>(0);
@@ -151,15 +161,60 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
       swingPhaseRef.current = 0;
       isPlacingRef.current = false;
 
+      // Initialize drop timer for level 1
+      const initialTime = getDropTimeLimit(1);
+      setDropTimeLeft(initialTime);
+      maxDropTimeRef.current = initialTime;
+      dropTimerStartTimeRef.current = 0;
+      lastTickSecondRef.current = -1;
+
       // Start by lowering the first obstacle down from above the screen!
       startWinchDown();
     }
   }, [gameState, isMobile, startWinchDown]);
 
+  // Timeout handler: Triggered if player fails to drop before the timer runs out!
+  const handleTimeOut = useCallback(() => {
+    if (gameState !== 'PLAYING' || isPlacingRef.current) return;
+    isPlacingRef.current = true;
+    dropTimerStartTimeRef.current = 0;
+    soundFx.playGameOver();
+
+    const currentCfg = getObstacleForLevel(currentLevel, isMobile);
+    const topPlacedLayer = layers[layers.length - 1];
+    const currentStackHeight = layers.reduce(
+      (acc, l) => acc + (l.height - (l.level === 1 ? 32 : 2)),
+      0
+    );
+
+    // Cable breaks / block drops off the tower
+    const missDebris: FallingDebris = {
+      id: `timeout-${Date.now()}`,
+      x: movingXRef.current,
+      bottom: currentStackHeight,
+      width: currentCfg.width,
+      height: currentCfg.height,
+      direction: movingXRef.current > topPlacedLayer.x ? 'right' : 'left',
+      image: currentCfg.img,
+    };
+    setDebris([missDebris]);
+    setIsDropping(false);
+    setFeedbackToast({
+      text: 'TIME OUT!',
+      subtext: 'Drop timer expired! You lost.',
+      type: 'miss',
+    });
+
+    setTimeout(() => {
+      onGameOver(currentLevel - 1, calculateMultiplier(currentLevel - 1));
+    }, 1100);
+  }, [gameState, currentLevel, isMobile, layers, onGameOver]);
+
   // Drop block placement with physics drop & natural resting tilt (box does NOT get cut!)
   const handleDropBlock = useCallback(() => {
     if (gameState !== 'PLAYING' || isPlacingRef.current || isLoweringRef.current) return;
     isPlacingRef.current = true;
+    dropTimerStartTimeRef.current = 0; // stop countdown timer immediately
     setIsDropping(true);
 
     const dropStartX = movingXRef.current;
@@ -437,8 +492,34 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
           setIsLowering(false);
           isPlacingRef.current = false;
           swingPhaseRef.current = 0;
+
+          // Start the drop countdown timer!
+          const timeLimit = getDropTimeLimit(currentLevel);
+          maxDropTimeRef.current = timeLimit;
+          setDropTimeLeft(timeLimit);
+          dropTimerStartTimeRef.current = performance.now();
+          lastTickSecondRef.current = Math.ceil(timeLimit);
         }
       } else if (!isPlacingRef.current) {
+        // Drop countdown timer check
+        if (dropTimerStartTimeRef.current > 0) {
+          const elapsedSec = (timestamp - dropTimerStartTimeRef.current) / 1000;
+          const remainingSec = Math.max(0, maxDropTimeRef.current - elapsedSec);
+          setDropTimeLeft(remainingSec);
+          onTimerTick?.(remainingSec);
+
+          const wholeSec = Math.ceil(remainingSec);
+          if (remainingSec <= 3.0 && remainingSec > 0 && wholeSec !== lastTickSecondRef.current) {
+            lastTickSecondRef.current = wholeSec;
+            soundFx.playTick(true);
+          }
+
+          if (remainingSec <= 0) {
+            handleTimeOut();
+            return;
+          }
+        }
+
         // 2. Normal pendulum swing across the screen
         swingPhaseRef.current += angularSpeed * delta;
         const currentTrolleyX = Math.sin(swingPhaseRef.current) * SWEEP_TRAVEL;
@@ -469,7 +550,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
         cancelAnimationFrame(dropAnimRef.current);
       }
     };
-  }, [gameState, currentLevel, isMobile]);
+  }, [gameState, currentLevel, isMobile, handleTimeOut, onTimerTick]);
 
   const activeTheme = COLOR_THEMES[currentLevel % COLOR_THEMES.length];
 
@@ -553,6 +634,46 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
         </div>
       )}
 
+
+      {/* Ultra-Premium Right-Side Floating Numerical Timer (No card/box, just pure luxury typography) */}
+      {gameState === 'PLAYING' && !isLowering && (
+        <div
+          className="absolute top-16 sm:top-20 right-4 sm:right-6 md:right-8 z-30 pointer-events-none select-none flex flex-col items-end"
+        >
+          {/* Numerical Countdown Display with 3D Luxury Gradient */}
+          <div className="flex items-baseline gap-1">
+            <span
+              className={`font-mono font-black text-3xl sm:text-4xl md:text-5xl tracking-tight leading-none transition-all duration-150 ${
+                dropTimeLeft <= 2.5
+                  ? 'text-transparent bg-clip-text bg-gradient-to-b from-white via-rose-300 to-rose-500 drop-shadow-[0_0_20px_#f43f5e] animate-pulse'
+                  : 'text-transparent bg-clip-text bg-gradient-to-b from-white via-amber-200 to-amber-400 drop-shadow-[0_4px_16px_rgba(251,191,36,0.6)]'
+              }`}
+            >
+              {dropTimeLeft.toFixed(1)}
+            </span>
+            <span
+              className={`font-mono font-black text-xs sm:text-sm tracking-widest uppercase ${
+                dropTimeLeft <= 2.5
+                  ? 'text-rose-400 animate-pulse drop-shadow-[0_0_8px_#f43f5e]'
+                  : 'text-amber-300 drop-shadow-[0_0_6px_#facc15]'
+              }`}
+            >
+              s
+            </span>
+          </div>
+
+          {/* Micro Subtitle */}
+          <span
+            className={`text-[9px] sm:text-[10px] font-mono uppercase font-black tracking-widest mt-0.5 ${
+              dropTimeLeft <= 2.5
+                ? 'text-rose-400 drop-shadow-[0_0_8px_#f43f5e] animate-pulse'
+                : 'text-amber-200/80 drop-shadow-sm'
+            }`}
+          >
+            {dropTimeLeft <= 2.5 ? 'DROP NOW!' : 'DROP TIME'}
+          </span>
+        </div>
+      )}
 
       {/* Camera Stage: Sits comfortably on mobile and slightly lowered on desktop */}
       <div

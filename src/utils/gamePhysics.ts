@@ -17,79 +17,20 @@ export interface DifficultyParams {
 }
 
 /**
- * Rapid & progressive difficulty progression calibrated around key milestones:
- * - Level 1-2 (Starter): Smooth swing (2.2 rad/s, 16.5° tilt, 20px safe drop window inside the lines)
- * - Level 3-5 (3rd box series jump): Faster speed & sway (3.2-3.7 rad/s, 19.5°-21.5° tilt, 16px safe drop window)
- * - Level 6-8 (6th box rapid escalation): High speed, aggressive swing (4.3-4.9 rad/s, 23.5°-25.5° tilt, 13px safe drop window)
- * - Level 9+ (Extreme High Stakes): Lightning reflexes required (5.2-5.8 rad/s, up to 27.5° tilt, 10px safe drop window)
+ * Constant smooth swing speed and natural pendulum tilt across ALL levels:
+ * Har baar ek hi steady speed rehti hai - badhti ya ghati nahi!
  */
-export function getDifficultyParams(level: number, isMobile: boolean = false): DifficultyParams {
+export function getDifficultyParams(_level: number = 1, isMobile: boolean = false): DifficultyParams {
   const baseTravel = isMobile ? 88 : 110;
 
-  if (level <= 2) {
-    // Level 1-2: Starter friendly (safe margin 20px inside the lines)
-    const angularSpeed = 2.2 + (level - 1) * 0.2;
-    const maxSwingAngle = 16.5;
-    const sweepTravel = baseTravel;
-    const safeOffsetRatio = 0.143; // 20px on 140px block
-    return {
-      angularSpeed,
-      maxSwingAngle,
-      sweepTravel,
-      safeOffsetRatio,
-      maxSafeOffset: 20,
-      greatThreshold: 12,
-      goodThreshold: 20,
-    };
-  }
-
-  if (level <= 5) {
-    // Level 3-5: 3rd box series jump (faster speed, wider swing, tighter drop tolerance 16px)
-    const angularSpeed = 3.2 + (level - 3) * 0.28; // L3: 3.2, L4: 3.48, L5: 3.76
-    const maxSwingAngle = 19.5 + (level - 3) * 1.0; // L3: 19.5°, L4: 20.5°, L5: 21.5°
-    const sweepTravel = Math.round(baseTravel * 1.12);
-    const safeOffsetRatio = 0.114; // 16px on 140px block
-    return {
-      angularSpeed,
-      maxSwingAngle,
-      sweepTravel,
-      safeOffsetRatio,
-      maxSafeOffset: 16,
-      greatThreshold: 9,
-      goodThreshold: 16,
-    };
-  }
-
-  if (level <= 8) {
-    // Level 6-8: 6th box rapid escalation (fast & intense swing, tight margin 13px)
-    const angularSpeed = 4.3 + (level - 6) * 0.32; // L6: 4.3, L7: 4.62, L8: 4.94
-    const maxSwingAngle = 23.5 + (level - 6) * 1.0; // L6: 23.5°, L7: 24.5°, L8: 25.5°
-    const sweepTravel = Math.round(baseTravel * 1.22);
-    const safeOffsetRatio = 0.092; // 13px on 140px block
-    return {
-      angularSpeed,
-      maxSwingAngle,
-      sweepTravel,
-      safeOffsetRatio,
-      maxSafeOffset: 13,
-      greatThreshold: 7,
-      goodThreshold: 13,
-    };
-  }
-
-  // Level 9+: Extreme High Stakes crash adrenaline (ultra tight margin 10px)
-  const angularSpeed = Math.min(5.8, 5.2 + (level - 9) * 0.2); // L9: 5.2, L10: 5.4, L11: 5.6, capped at 5.8
-  const maxSwingAngle = Math.min(27.5, 26.5 + (level - 9) * 0.3); // max 27.5°
-  const sweepTravel = Math.round(baseTravel * 1.3);
-  const safeOffsetRatio = 0.071; // 10px on 140px block
   return {
-    angularSpeed,
-    maxSwingAngle,
-    sweepTravel,
-    safeOffsetRatio,
-    maxSafeOffset: 10,
-    greatThreshold: 5,
-    goodThreshold: 10,
+    angularSpeed: 2.2, // Constant steady 2.2 rad/s swing speed
+    maxSwingAngle: 14.5, // Constant natural 14.5° pendulum tilt
+    sweepTravel: baseTravel,
+    safeOffsetRatio: 0.135,
+    maxSafeOffset: 20,
+    greatThreshold: 12,
+    goodThreshold: 20,
   };
 }
 
@@ -204,14 +145,10 @@ export function calculateMultiplier(level: number): number {
 }
 
 /**
- * Speed progression based on level (pixels per second)
- * Scales progressively with milestones at Level 1, 3, 6, and 9+.
+ * Constant speed across all levels (pixels per second)
  */
-export function calculateSpeed(level: number): number {
-  if (level <= 2) return 135 + level * 10;
-  if (level <= 5) return 175 + (level - 2) * 20;
-  if (level <= 8) return 245 + (level - 5) * 25;
-  return Math.min(420, 325 + (level - 8) * 20);
+export function calculateSpeed(_level: number): number {
+  return 150;
 }
 
 /**
@@ -220,6 +157,14 @@ export function calculateSpeed(level: number): number {
  */
 export function calculateNextWidth(_level: number): number {
   return BASE_BLOCK_WIDTH;
+}
+
+/**
+ * Exact 5.0 seconds drop time limit per floor:
+ * Player must drop the block within 5 seconds or lose!
+ */
+export function getDropTimeLimit(_level?: number): number {
+  return 5.0;
 }
 
 /**
