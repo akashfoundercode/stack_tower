@@ -46,16 +46,16 @@ describe('Tower Stacking Physics & Mechanics', () => {
     const p9 = getDifficultyParams(9);
 
     // Constant speed across all levels
-    expect(p1.angularSpeed).toBe(2.2);
-    expect(p3.angularSpeed).toBe(2.2);
-    expect(p6.angularSpeed).toBe(2.2);
-    expect(p9.angularSpeed).toBe(2.2);
+    expect(p1.angularSpeed).toBe(2.8);
+    expect(p3.angularSpeed).toBe(2.8);
+    expect(p6.angularSpeed).toBe(2.8);
+    expect(p9.angularSpeed).toBe(2.8);
 
     // Constant tilt angle across all levels
-    expect(p1.maxSwingAngle).toBe(14.5);
-    expect(p3.maxSwingAngle).toBe(14.5);
-    expect(p6.maxSwingAngle).toBe(14.5);
-    expect(p9.maxSwingAngle).toBe(14.5);
+    expect(p1.maxSwingAngle).toBe(16.0);
+    expect(p3.maxSwingAngle).toBe(16.0);
+    expect(p6.maxSwingAngle).toBe(16.0);
+    expect(p9.maxSwingAngle).toBe(16.0);
   });
 
   it('escalates multiplier progressively as tower grows', () => {

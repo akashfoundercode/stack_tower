@@ -8,7 +8,7 @@ interface CityBackgroundProps {
   cameraY?: number;
 }
 
-export const CityBackground: React.FC<CityBackgroundProps> = ({ cameraY = 0 }) => {
+const CityBackgroundComponent: React.FC<CityBackgroundProps> = ({ cameraY = 0 }) => {
   // Parallax factor: as tower climbs high, background continuously scrolls down
   const parallaxOffset = cameraY * 0.38;
 
@@ -213,3 +213,5 @@ export const CityBackground: React.FC<CityBackgroundProps> = ({ cameraY = 0 }) =
     </div>
   );
 };
+
+export const CityBackground = React.memo(CityBackgroundComponent);

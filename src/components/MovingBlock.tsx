@@ -47,7 +47,7 @@ export const MovingBlock: React.FC<MovingBlockProps> = ({
       {/* 1. SINGLE UNIFIED CRANE TROLLEY, HOOK & OBSTACLE (All move left-right together & winch down from ceiling!) */}
       {!isDropping ? (
         <div
-          className="absolute left-1/2 top-0 pointer-events-none z-40 flex flex-col items-center"
+          className="absolute left-1/2 top-0 pointer-events-none z-40 flex flex-col items-center will-change-transform"
           style={{
             width: `${width}px`,
             marginLeft: `${-width / 2}px`,
@@ -87,7 +87,7 @@ export const MovingBlock: React.FC<MovingBlockProps> = ({
 
           {/* PENDULUM SWING (Hanging directly from hook loop, swinging with tilt) */}
           <div
-            className="flex flex-col items-center pointer-events-none -mt-1.5"
+            className="flex flex-col items-center pointer-events-none -mt-1.5 will-change-transform"
             style={{
               width: `${width}px`,
               transformOrigin: 'top center', // Exact hook loop pivot point!

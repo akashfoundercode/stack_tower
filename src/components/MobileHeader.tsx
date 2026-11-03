@@ -11,7 +11,7 @@ interface MobileHeaderProps {
   onOpenTutorial?: () => void;
 }
 
-export const MobileHeader: React.FC<MobileHeaderProps> = ({
+const MobileHeaderComponent: React.FC<MobileHeaderProps> = ({
   demoBalance,
   onResetBalance,
   onOpenHistory,
@@ -87,4 +87,6 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
     </div>
   );
 };
+
+export const MobileHeader = React.memo(MobileHeaderComponent);
 

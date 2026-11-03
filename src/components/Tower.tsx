@@ -8,8 +8,8 @@ interface TowerProps {
   showBoundaryLines?: boolean;
 }
 
-export const Tower = React.forwardRef<HTMLDivElement, TowerProps>(
-  ({ layers }, ref) => {
+export const Tower = React.memo(
+  React.forwardRef<HTMLDivElement, TowerProps>(({ layers }, ref) => {
     return (
       <div className="relative w-full flex flex-col items-center">
         {/* We render layers bottom-up: base is index 0 at the bottom */}
@@ -47,7 +47,7 @@ export const Tower = React.forwardRef<HTMLDivElement, TowerProps>(
         </div>
       </div>
     );
-  }
+  })
 );
 
 Tower.displayName = 'Tower';

@@ -16,7 +16,7 @@ interface MobileBettingOverlayProps {
   dropTimeLeft?: number;
 }
 
-export const MobileBettingOverlay: React.FC<MobileBettingOverlayProps> = ({
+const MobileBettingOverlayComponent: React.FC<MobileBettingOverlayProps> = ({
   gameState,
   betAmount,
   onBetChange,
@@ -293,3 +293,5 @@ export const MobileBettingOverlay: React.FC<MobileBettingOverlayProps> = ({
     </div>
   );
 };
+
+export const MobileBettingOverlay = React.memo(MobileBettingOverlayComponent);

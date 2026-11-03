@@ -24,8 +24,8 @@ export function getDifficultyParams(_level: number = 1, isMobile: boolean = fals
   const baseTravel = isMobile ? 88 : 110;
 
   return {
-    angularSpeed: 2.2, // Constant steady 2.2 rad/s swing speed
-    maxSwingAngle: 14.5, // Constant natural 14.5° pendulum tilt
+    angularSpeed: 2.8, // Slightly faster, lively 2.8 rad/s swing speed
+    maxSwingAngle: 16.0, // Dynamic 16.0° pendulum tilt
     sweepTravel: baseTravel,
     safeOffsetRatio: 0.135,
     maxSafeOffset: 20,

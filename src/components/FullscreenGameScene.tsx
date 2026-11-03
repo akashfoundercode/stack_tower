@@ -92,6 +92,11 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
   const dropTimerStartTimeRef = useRef<number>(0);
   const maxDropTimeRef = useRef<number>(5.0);
   const lastTickSecondRef = useRef<number>(-1);
+  const lastTenthRef = useRef<number>(-1);
+
+  // Stable refs for callbacks inside animation frame (prevents loop tearing down on mobile!)
+  const onTimerTickRef = useRef(onTimerTick);
+  onTimerTickRef.current = onTimerTick;
 
   // Winch-down descent animation (Crane lowers obstacle smoothly from above the ceiling!)
   const [winchY, setWinchY] = useState<number>(0);
@@ -209,6 +214,9 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
       onGameOver(currentLevel - 1, calculateMultiplier(currentLevel - 1));
     }, 1100);
   }, [gameState, currentLevel, isMobile, layers, onGameOver]);
+
+  const handleTimeOutRef = useRef(handleTimeOut);
+  handleTimeOutRef.current = handleTimeOut;
 
   // Drop block placement with physics drop & natural resting tilt (box does NOT get cut!)
   const handleDropBlock = useCallback(() => {
@@ -501,12 +509,17 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
           lastTickSecondRef.current = Math.ceil(timeLimit);
         }
       } else if (!isPlacingRef.current) {
-        // Drop countdown timer check
+        // Drop countdown timer check (throttled to 10Hz to prevent mobile re-render stutter!)
         if (dropTimerStartTimeRef.current > 0) {
           const elapsedSec = (timestamp - dropTimerStartTimeRef.current) / 1000;
           const remainingSec = Math.max(0, maxDropTimeRef.current - elapsedSec);
-          setDropTimeLeft(remainingSec);
-          onTimerTick?.(remainingSec);
+
+          const currentTenth = Math.ceil(remainingSec * 10);
+          if (currentTenth !== lastTenthRef.current) {
+            lastTenthRef.current = currentTenth;
+            setDropTimeLeft(remainingSec);
+            onTimerTickRef.current?.(remainingSec);
+          }
 
           const wholeSec = Math.ceil(remainingSec);
           if (remainingSec <= 3.0 && remainingSec > 0 && wholeSec !== lastTickSecondRef.current) {
@@ -515,7 +528,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
           }
 
           if (remainingSec <= 0) {
-            handleTimeOut();
+            handleTimeOutRef.current();
             return;
           }
         }
@@ -550,7 +563,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
         cancelAnimationFrame(dropAnimRef.current);
       }
     };
-  }, [gameState, currentLevel, isMobile, handleTimeOut, onTimerTick]);
+  }, [gameState, currentLevel, isMobile]);
 
   const activeTheme = COLOR_THEMES[currentLevel % COLOR_THEMES.length];
 
