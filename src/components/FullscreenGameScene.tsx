@@ -352,8 +352,8 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
         // Camera Sinking: Top box is fully visible, floor underneath it ("jispe gira hai") is AADHA (half) visible!
         const allLayers = [...layers, newLayer];
         if (allLayers.length === 2) {
-          // Level 1 landed on bottom shop: shop sinks down by 55px so its top half/roof is "AADHA" visible
-          setCameraY(55);
+          // Level 1 landed on bottom shop: shop sinks down so its top half/roof is "AADHA" visible
+          setCameraY(isMobile ? 42 : 55);
         } else if (allLayers.length > 2) {
           // Level N landed on Level N-1:
           // Older floors below N-1 are completely sunken
@@ -570,7 +570,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
 
       {/* Camera Stage: Sits comfortably on mobile and slightly lowered on desktop */}
       <div
-        className="absolute inset-x-0 bottom-44 sm:bottom-46 md:bottom-[184px] flex flex-col items-center justify-end transition-transform duration-300 ease-out will-change-transform pointer-events-none"
+        className="absolute inset-x-0 bottom-[204px] sm:bottom-46 md:bottom-[184px] flex flex-col items-center justify-end transition-transform duration-300 ease-out will-change-transform pointer-events-none"
         style={{
           transform: `translate3d(0px, ${cameraY}px, 0px)`,
         }}
