@@ -122,6 +122,7 @@ export const GamePage: React.FC = () => {
     if (gameState !== 'PLAYING') return;
 
     soundFx.playCashOut();
+    soundFx.speak('Cash Out');
     const finalPayout = Math.floor(activeBet * currentMultiplier * 100) / 100;
     const profit = finalPayout - activeBet;
 

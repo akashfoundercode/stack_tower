@@ -174,41 +174,55 @@ const CityBackgroundComponent: React.FC<CityBackgroundProps> = ({ cameraY = 0 })
       </div>
 
       {/* =========================================================================
-          DISTANT HIGH-SKY BALLOONS (Deep in Background on Outer Edges)
+          CONTINUOUS FLYING HOT AIR BALLOONS (Active, natural flight across the sky)
+          Balloons continuously fly from edge to edge with natural sway & thermal lifts
           ========================================================================= */}
 
-      {/* 1. Distant Small Balloon (baloon1): Far Left Upper Sky */}
+      {/* 1. Primary Hot Air Balloon (baloon1): Flying Left to Right across mid sky */}
       <div
-        className="absolute top-[11%] left-3 sm:left-7 z-0 animate-balloon-side-left pointer-events-none"
+        className="absolute top-[13%] left-0 z-0 animate-balloon-fly-right pointer-events-none"
+        style={{ animationDelay: '-12s' }}
       >
         <img
           src={balloon1Img}
-          alt="Distant balloon left"
-          className="w-7 sm:w-8 h-auto opacity-60 filter blur-[0.4px] brightness-105"
+          alt="Flying hot air balloon right"
+          className="w-7 sm:w-9 h-auto opacity-90 drop-shadow-[0_4px_10px_rgba(0,0,0,0.25)] brightness-105"
         />
       </div>
 
-      {/* 2. Distant Tiny Balloon (balloon2): Far Right Upper Sky */}
+      {/* 2. Secondary Air Balloon (balloon2): Flying Right to Left across upper sky */}
       <div
-        className="absolute top-[16%] right-3 sm:right-7 z-0 animate-balloon-side-right pointer-events-none"
-        style={{ animationDelay: '-8s' }}
+        className="absolute top-[22%] left-0 z-0 animate-balloon-fly-left pointer-events-none"
+        style={{ animationDelay: '-24s' }}
       >
         <img
           src={balloon2Img}
-          alt="Distant balloon right"
-          className="w-6 sm:w-7 h-auto opacity-55 filter blur-[0.5px] brightness-100"
+          alt="Flying hot air balloon left"
+          className="w-7 sm:w-9 h-auto opacity-85 drop-shadow-[0_4px_8px_rgba(0,0,0,0.2)] brightness-100"
         />
       </div>
 
-      {/* 3. Deep Background Speck (baloon1): Far Left Mid-High Sky */}
+      {/* 3. Distant High-Altitude Balloon (baloon1): High blue sky drift Left to Right */}
       <div
-        className="absolute top-[30%] left-5 sm:left-10 z-0 animate-balloon-side-left pointer-events-none"
-        style={{ animationDelay: '-14s' }}
+        className="absolute top-[7%] left-0 z-0 animate-balloon-fly-high pointer-events-none"
+        style={{ animationDelay: '-38s' }}
       >
         <img
           src={balloon1Img}
-          alt="Deep background balloon"
-          className="w-5 sm:w-6 h-auto opacity-45 filter blur-[0.6px] brightness-100"
+          alt="High altitude flying balloon"
+          className="w-5 sm:w-6 h-auto opacity-75 filter blur-[0.3px] brightness-100"
+        />
+      </div>
+
+      {/* 4. Ambient Scenic Balloon (balloon2): Delayed phase flight Left to Right */}
+      <div
+        className="absolute top-[18%] left-0 z-0 animate-balloon-fly-right pointer-events-none"
+        style={{ animationDelay: '-29s' }}
+      >
+        <img
+          src={balloon2Img}
+          alt="Scenic drifting balloon"
+          className="w-6 sm:w-7 h-auto opacity-75 filter blur-[0.2px] brightness-105"
         />
       </div>
     </div>

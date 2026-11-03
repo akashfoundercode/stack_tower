@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Building2 } from 'lucide-react';
 import balloon1Img from '../assets/games/baloon1.png';
 import balloon2Img from '../assets/games/balloon2.png';
 import frameBg from '../assets/FRAMES/FRAMES (1).png';
@@ -148,7 +149,7 @@ export const GameLoader: React.FC<GameLoaderProps> = ({ onLoaded }) => {
             <div className="mt-1 w-14 h-12 bg-gradient-to-b from-amber-500 to-amber-700 rounded border-2 border-amber-300 shadow-xl flex flex-col items-center justify-between p-1">
               <div className="w-8 h-1 bg-amber-200 rounded-full" />
               <div className="w-6 h-5 bg-sky-200/90 rounded border border-amber-900/40 flex items-center justify-center">
-                <span className="text-[9px]">🏢</span>
+                <Building2 className="w-3.5 h-3.5 text-amber-800" />
               </div>
               <div className="w-full h-1 bg-amber-900/60 rounded-xs" />
             </div>

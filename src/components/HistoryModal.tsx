@@ -1,6 +1,6 @@
 import React from 'react';
 import { BetHistoryItem } from '../types/game';
-import { X, Trash2, Calendar, TrendingUp, TrendingDown } from 'lucide-react';
+import { X, Trash2, Calendar, TrendingUp, TrendingDown, History } from 'lucide-react';
 import { soundFx } from '../utils/sound';
 
 interface HistoryModalProps {
@@ -24,7 +24,7 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-slate-800">
           <div className="flex items-center gap-2">
-            <span className="text-xl">📋</span>
+            <History className="w-5 h-5 text-amber-400" />
             <h3 className="text-lg font-black text-white">Bet & Round History</h3>
           </div>
           <button

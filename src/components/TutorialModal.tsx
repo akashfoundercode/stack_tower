@@ -1,5 +1,18 @@
 import React, { useState } from 'react';
-import { X, ChevronRight, ChevronLeft, CheckCircle2, AlertTriangle, Coins, MousePointerClick } from 'lucide-react';
+import {
+  X,
+  ChevronRight,
+  ChevronLeft,
+  CheckCircle2,
+  AlertTriangle,
+  Coins,
+  MousePointerClick,
+  Gamepad2,
+  Scale,
+  Star,
+  Rocket,
+  Lightbulb,
+} from 'lucide-react';
 import { soundFx } from '../utils/sound';
 
 interface TutorialModalProps {
@@ -40,7 +53,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
       badge: 'STEP 1 OF 3 • BUTTONS & CONTROLS',
       title: 'Game Buttons & Controls',
       titleHi: 'खेलते समय कौन सा बटन कब दबाएं',
-      icon: '🎮',
+      icon: <Gamepad2 className="w-6 h-6 text-sky-400" />,
       content: (
         <div className="space-y-2.5 w-full text-left">
           {/* BUILD Button explanation */}
@@ -71,18 +84,21 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
 
           {/* Bet Selector */}
           <div className="bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-1.5 flex items-center justify-between text-[11px] sm:text-xs text-slate-300">
-            <span className="font-bold text-slate-200">💰 Bet Stepper (- / +):</span>
+            <span className="font-bold text-slate-200 flex items-center gap-1">
+              <Coins className="w-3.5 h-3.5 text-amber-400" />
+              Bet Stepper (- / +):
+            </span>
             <span className="text-sky-300 font-mono">Round shuru hone se pehle apni bet chunein (e.g. ₹100)</span>
           </div>
         </div>
       ),
-      tip: '💡 Hint: Spacebar daba kar bhi box drop kar sakte hain!',
+      tip: 'Hint: Spacebar daba kar bhi box drop kar sakte hain!',
     },
     {
       badge: 'STEP 2 OF 3 • BALANCED DROP',
       title: 'Balanced Drop Physics',
       titleHi: 'बॉक्स को बैलेंस करके गिराना समझें',
-      icon: '⚖️',
+      icon: <Scale className="w-6 h-6 text-amber-400" />,
       content: (
         <div className="space-y-2 w-full text-left">
           <p className="text-[11px] sm:text-xs text-slate-300 leading-relaxed text-center px-2">
@@ -92,7 +108,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
           {/* Perfect Hit */}
           <div className="bg-slate-950/80 border border-yellow-400/40 rounded-2xl p-2.5 flex items-start gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-yellow-400/20 text-yellow-300 flex items-center justify-center shrink-0 mt-0.5 text-base font-black">
-              ★
+              <Star className="w-4 h-4 fill-current text-yellow-300" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -128,13 +144,13 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
           </div>
         </div>
       ),
-      tip: '⚠️ Savdhani: 3rd aur 6th box par speed tezi se badhegi, balance ka dhyan rakhein!',
+      tip: 'Savdhani: Higher floors par balance aur precision ka khas dhyan rakhein!',
     },
     {
       badge: 'STEP 3 OF 3 • WALLET & MULTIPLIER',
       title: 'Wallet Balance & Payout',
       titleHi: 'वॉलेट बैलेंस और कमाई कैसे काम करती है',
-      icon: '💰',
+      icon: <Coins className="w-6 h-6 text-emerald-400" />,
       content: (
         <div className="space-y-2.5 w-full text-left">
           {/* Top Balance Mockup */}
@@ -177,7 +193,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
           </div>
         </div>
       ),
-      tip: '🚀 Strategy: Lalach me pura round na gawayein — safe time par Cash Out karein!',
+      tip: 'Strategy: Lalach me pura round na gawayein — safe time par Cash Out karein!',
     },
   ];
 
@@ -203,7 +219,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
               onClick={handleSkip}
               className="text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 active:scale-95 transition"
             >
-              SKIP ⏭
+              SKIP
             </button>
 
             {/* Close X */}
@@ -219,9 +235,11 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
 
         {/* Slide Content */}
         <div className="py-3 flex flex-col items-center text-center relative z-10 min-h-[310px] justify-between">
-          {/* Header Title with Emoji Icon */}
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-2xl">{step.icon}</span>
+          {/* Header Title with Vector Icon */}
+          <div className="flex items-center gap-2.5 mt-0.5">
+            <div className="p-2 rounded-xl bg-slate-800/80 border border-white/10 shadow-sm flex items-center justify-center">
+              {step.icon}
+            </div>
             <div className="text-left">
               <h3 className="text-lg sm:text-xl font-black text-white tracking-tight drop-shadow-sm leading-none">
                 {step.title}
@@ -233,9 +251,10 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
           {/* Dynamic Rich Step Content */}
           <div className="w-full my-2">{step.content}</div>
 
-          {/* Golden / Amber Tip */}
-          <div className="w-full text-center text-[11px] font-bold text-amber-300/90 bg-amber-500/10 border border-amber-500/20 py-1.5 px-3 rounded-xl">
-            {step.tip}
+          {/* Golden / Amber Tip with Vector Lightbulb */}
+          <div className="w-full text-center text-[11px] font-bold text-amber-300/90 bg-amber-500/10 border border-amber-500/20 py-1.5 px-3 rounded-xl flex items-center justify-center gap-1.5">
+            <Lightbulb className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <span>{step.tip}</span>
           </div>
         </div>
 
@@ -278,8 +297,8 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({ isOpen, onClose })
                   : 'bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white shadow-sky-500/30'
               }`}
             >
-              <span>{currentStep === 2 ? 'START PLAYING! 🚀' : 'Next'}</span>
-              {currentStep < 2 && <ChevronRight className="w-4 h-4" />}
+              <span>{currentStep === 2 ? 'START PLAYING!' : 'Next'}</span>
+              {currentStep === 2 ? <Rocket className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
             </button>
           </div>
         </div>

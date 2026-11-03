@@ -11,6 +11,7 @@ import {
   ShieldAlert,
   Layers,
   ArrowUpRight,
+  Star,
 } from 'lucide-react';
 import { soundFx } from '../utils/sound';
 
@@ -113,15 +114,15 @@ export const ResultModal: React.FC<ResultModalProps> = ({
         <div className="relative mb-3 flex flex-col items-center">
           {/* Top VIP Ribbon Pill */}
           <div
-            className={`px-3.5 py-0.5 rounded-full text-[10px] font-black tracking-widest uppercase mb-2 border shadow-md flex items-center gap-1 ${
+            className={`px-3.5 py-0.5 rounded-full text-[10px] font-black tracking-widest uppercase mb-2 border shadow-md flex items-center gap-1.5 ${
               isWin
                 ? 'bg-gradient-to-r from-amber-500/20 via-yellow-400/30 to-amber-500/20 border-yellow-400/50 text-yellow-300 shadow-[0_0_12px_rgba(250,204,21,0.3)]'
                 : 'bg-gradient-to-r from-rose-500/20 via-rose-400/30 to-rose-500/20 border-rose-400/50 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.3)]'
             }`}
           >
-            <span>★</span>
+            <Star className="w-2.5 h-2.5 fill-current" />
             <span>{isWin ? 'MEGA WINNER' : 'ROUND FINISHED'}</span>
-            <span>★</span>
+            <Star className="w-2.5 h-2.5 fill-current" />
           </div>
 
           {/* 3D Multi-Tier Beveled Crest */}

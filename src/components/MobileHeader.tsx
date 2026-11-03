@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, Wifi, MoreHorizontal } from 'lucide-react';
+import { Menu, Wifi, MoreHorizontal, HelpCircle, Shield, Zap, Flame } from 'lucide-react';
 import { GameDifficulty, GameState } from '../types/game';
 import { soundFx } from '../utils/sound';
 
@@ -50,7 +50,7 @@ const MobileHeaderComponent: React.FC<MobileHeaderProps> = ({
             className="flex items-center gap-1 px-2 py-1.5 rounded-xl bg-sky-950/40 hover:bg-sky-950/60 backdrop-blur-md border border-white/20 active:scale-95 transition shadow-sm text-xs font-black text-amber-300 hover:text-white"
             title="How to Play Tutorial"
           >
-            <span className="text-xs sm:text-sm">❓</span>
+            <HelpCircle className="w-3.5 h-3.5 text-amber-300" />
             <span className="hidden md:inline font-mono uppercase tracking-wider text-[11px]">Help</span>
           </button>
         )}
@@ -64,15 +64,16 @@ const MobileHeaderComponent: React.FC<MobileHeaderProps> = ({
             <button
               onClick={() => {
                 soundFx.playClick();
+                soundFx.speak('Easy Mode');
                 onDifficultyChange?.('EASY');
               }}
-              className={`px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-black tracking-wider transition-all duration-150 flex items-center gap-0.5 sm:gap-1 ${
+              className={`px-2.5 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-black tracking-wider transition-all duration-150 flex items-center gap-1 ${
                 difficulty === 'EASY'
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-[0_2px_8px_rgba(16,185,129,0.7)] border border-emerald-300 scale-[1.04]'
                   : 'text-stone-300 hover:text-white hover:bg-white/10'
               }`}
             >
-              <span className="text-[10px]">🛡️</span>
+              <Shield className={`w-3 h-3 ${difficulty === 'EASY' ? 'text-white fill-white/20' : 'text-emerald-400'}`} />
               <span>EASY</span>
             </button>
 
@@ -80,15 +81,16 @@ const MobileHeaderComponent: React.FC<MobileHeaderProps> = ({
             <button
               onClick={() => {
                 soundFx.playClick();
+                soundFx.speak('Medium Mode');
                 onDifficultyChange?.('MEDIUM');
               }}
-              className={`px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-black tracking-wider transition-all duration-150 flex items-center gap-0.5 sm:gap-1 ${
+              className={`px-2.5 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-black tracking-wider transition-all duration-150 flex items-center gap-1 ${
                 difficulty === 'MEDIUM'
                   ? 'bg-gradient-to-r from-amber-500 to-yellow-600 text-white shadow-[0_2px_8px_rgba(245,158,11,0.7)] border border-amber-300 scale-[1.04]'
                   : 'text-stone-300 hover:text-white hover:bg-white/10'
               }`}
             >
-              <span className="text-[10px]">⚡</span>
+              <Zap className={`w-3 h-3 ${difficulty === 'MEDIUM' ? 'text-white fill-white' : 'text-amber-400'}`} />
               <span>MED</span>
             </button>
 
@@ -96,15 +98,16 @@ const MobileHeaderComponent: React.FC<MobileHeaderProps> = ({
             <button
               onClick={() => {
                 soundFx.playClick();
+                soundFx.speak('Hard Mode');
                 onDifficultyChange?.('HARD');
               }}
-              className={`px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-black tracking-wider transition-all duration-150 flex items-center gap-0.5 sm:gap-1 ${
+              className={`px-2.5 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-black tracking-wider transition-all duration-150 flex items-center gap-1 ${
                 difficulty === 'HARD'
                   ? 'bg-gradient-to-r from-rose-600 to-red-700 text-white shadow-[0_2px_8px_rgba(239,68,68,0.7)] border border-rose-300 scale-[1.04]'
                   : 'text-stone-300 hover:text-white hover:bg-white/10'
               }`}
             >
-              <span className="text-[10px]">🔥</span>
+              <Flame className={`w-3 h-3 ${difficulty === 'HARD' ? 'text-white fill-white' : 'text-rose-400'}`} />
               <span>HARD</span>
             </button>
           </div>
@@ -118,7 +121,13 @@ const MobileHeaderComponent: React.FC<MobileHeaderProps> = ({
                 : 'bg-amber-950/80 border-amber-400 text-amber-200'
             }`}
           >
-            <span>{difficulty === 'EASY' ? '🛡️' : difficulty === 'HARD' ? '🔥' : '⚡'}</span>
+            {difficulty === 'EASY' ? (
+              <Shield className="w-3 h-3 text-emerald-300 fill-emerald-300/30" />
+            ) : difficulty === 'HARD' ? (
+              <Flame className="w-3 h-3 text-rose-300 fill-rose-300" />
+            ) : (
+              <Zap className="w-3 h-3 text-amber-300 fill-amber-300" />
+            )}
             <span className="tracking-wider">{difficulty} MODE</span>
           </div>
         )}

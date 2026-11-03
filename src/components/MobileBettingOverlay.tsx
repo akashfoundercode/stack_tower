@@ -41,11 +41,13 @@ const MobileBettingOverlayComponent: React.FC<MobileBettingOverlayProps> = ({
 
   const handleAllIn = () => {
     soundFx.playClick();
+    soundFx.speak('All In');
     onBetChange(Math.max(10, demoBalance));
   };
 
   const handleDouble = () => {
     soundFx.playClick();
+    soundFx.speak('Double');
     const next = Math.min(demoBalance, betAmount * 2);
     onBetChange(next);
   };

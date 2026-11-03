@@ -3,6 +3,112 @@
 class SoundManager {
   private ctx: AudioContext | null = null;
   public enabled: boolean = true;
+  private femaleVoice: SpeechSynthesisVoice | null = null;
+
+  constructor() {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      this.initFemaleVoice();
+      if (typeof window.speechSynthesis.onvoiceschanged !== 'undefined') {
+        window.speechSynthesis.onvoiceschanged = () => {
+          this.initFemaleVoice();
+        };
+      }
+    }
+  }
+
+  private initFemaleVoice(): SpeechSynthesisVoice | null {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
+    const voices = window.speechSynthesis.getVoices();
+    if (!voices || voices.length === 0) return null;
+
+    // Comprehensive list of high-quality female voices across Chrome, macOS, iOS, Android, Windows:
+    // (Chrome: 'Google UK English Female', macOS/iOS: 'Samantha', 'Victoria', 'Flo', 'Sandy', 'Shelley', 'Tara', 'Kathy', 'Karen', 'Moira'; Windows: 'Zira', 'Jenny', 'Aria')
+    const femaleNames = [
+      'google uk english female',
+      'google us english female',
+      'samantha',
+      'victoria',
+      'karen',
+      'sandy',
+      'shelley',
+      'flo',
+      'tara',
+      'kathy',
+      'zira',
+      'jenny',
+      'aria',
+      'serena',
+      'allison',
+      'ava',
+      'moira',
+      'tessa',
+      'fiona',
+      'veena',
+      'hazel',
+      'susan',
+      'grandma',
+    ];
+
+    // 1. Direct match on known female voice names (English)
+    for (const name of femaleNames) {
+      const match = voices.find((v) => {
+        const full = `${v.name} ${v.voiceURI}`.toLowerCase();
+        const lang = v.lang.toLowerCase();
+        return lang.startsWith('en') && full.includes(name);
+      });
+      if (match) {
+        this.femaleVoice = match;
+        return match;
+      }
+    }
+
+    // 2. Any English voice that contains 'female' or 'woman' in name/URI
+    const femaleKeywordMatch = voices.find((v) => {
+      const full = `${v.name} ${v.voiceURI}`.toLowerCase();
+      const lang = v.lang.toLowerCase();
+      return lang.startsWith('en') && (full.includes('female') || full.includes('woman'));
+    });
+    if (femaleKeywordMatch) {
+      this.femaleVoice = femaleKeywordMatch;
+      return femaleKeywordMatch;
+    }
+
+    // 3. Fallback: filter out ALL known male voices in Chrome/Mac/Windows
+    const maleBlacklist = [
+      'google us english', // Chrome's default Google US English is deep male!
+      'google uk english male',
+      'male',
+      'david', 'mark', 'george', 'daniel', 'oliver', 'rishi',
+      'fred', 'alex', 'tom', 'bruce', 'ralph', 'albert', 'aman',
+      'eddy', 'reed', 'rocko', 'junior', 'grandpa', 'jester',
+      'bad news', 'bahh', 'bells', 'boing', 'bubbles', 'cellos',
+      'good news', 'organ', 'superstar', 'trinoids', 'whisper', 'wobble', 'zarvox'
+    ];
+
+    const safeNonMale = voices.find((v) => {
+      const full = `${v.name} ${v.voiceURI}`.toLowerCase();
+      const lang = v.lang.toLowerCase();
+      const isEnglish = lang.startsWith('en');
+      const isMale = maleBlacklist.some((m) => full.includes(m));
+      return isEnglish && !isMale;
+    });
+    if (safeNonMale) {
+      this.femaleVoice = safeNonMale;
+      return safeNonMale;
+    }
+
+    // 4. Any voice containing 'female' regardless of language
+    const anyFemale = voices.find((v) => {
+      const full = `${v.name} ${v.voiceURI}`.toLowerCase();
+      return full.includes('female') || full.includes('woman');
+    });
+    if (anyFemale) {
+      this.femaleVoice = anyFemale;
+      return anyFemale;
+    }
+
+    return null;
+  }
 
   private initContext() {
     if (!this.ctx && typeof window !== 'undefined') {
@@ -180,6 +286,35 @@ class SoundManager {
 
       osc.start(now);
       osc.stop(now + 0.05);
+    } catch {}
+  }
+
+  speak(text: string, options?: { rate?: number; pitch?: number; volume?: number }) {
+    if (!this.enabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    try {
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+      }
+
+      const voice = this.femaleVoice || this.initFemaleVoice();
+      if (voice) {
+        this.femaleVoice = voice;
+      }
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      if (voice) {
+        utterance.voice = voice;
+        utterance.lang = voice.lang;
+      } else {
+        utterance.lang = 'en-US';
+      }
+
+      // Bright, cheerful female arcade hostess pitch
+      utterance.pitch = options?.pitch ?? 1.3;
+      utterance.rate = options?.rate ?? 1.05;
+      utterance.volume = options?.volume ?? 1.0;
+
+      window.speechSynthesis.speak(utterance);
     } catch {}
   }
 }

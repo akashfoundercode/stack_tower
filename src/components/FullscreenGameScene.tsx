@@ -13,6 +13,7 @@ import { MovingBlock, SWING_TOP, CABLE_LENGTH, HOOK_LOOP_TOP } from './MovingBlo
 import { FallingBlock } from './FallingBlock';
 import { getObstacleForLevel } from './TowerBlock';
 import { soundFx } from '../utils/sound';
+import { Star, Zap, Shield, Flame } from 'lucide-react';
 
 interface FullscreenGameSceneProps {
   gameState: GameState;
@@ -86,6 +87,12 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
   const [dropY, setDropY] = useState<number>(SWING_TOP);
   const [isDropping, setIsDropping] = useState<boolean>(false);
 
+  // Mode Announcement Banner (Displays e.g. "EASY MODE START" with speech)
+  const [modeBanner, setModeBanner] = useState<{
+    mode: GameDifficulty;
+    visible: boolean;
+  } | null>(null);
+
   // Winch-down descent animation (Crane lowers obstacle smoothly from above the ceiling!)
   const [winchY, setWinchY] = useState<number>(0);
   const [isLowering, setIsLowering] = useState<boolean>(false);
@@ -154,10 +161,23 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
       swingPhaseRef.current = 0;
       isPlacingRef.current = false;
 
+      // Mode Announcement Banner and Voice Speech on start
+      setModeBanner({ mode: difficulty, visible: true });
+      soundFx.speak(`${difficulty.toLowerCase()} mode start!`);
+
+      const bannerTimer = setTimeout(() => {
+        setModeBanner((prev) => (prev ? { ...prev, visible: false } : null));
+        setTimeout(() => setModeBanner(null), 350);
+      }, 1400);
+
       // Start by lowering the first obstacle down from above the screen!
       startWinchDown();
+
+      return () => clearTimeout(bannerTimer);
+    } else {
+      setModeBanner(null);
     }
-  }, [gameState, isMobile, startWinchDown]);
+  }, [gameState, isMobile, difficulty, startWinchDown]);
 
   // Drop block placement with physics drop & natural resting tilt (box does NOT get cut!)
   const handleDropBlock = useCallback(() => {
@@ -221,6 +241,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
 
         if (result.status === 'MISS') {
           soundFx.playGameOver();
+          soundFx.speak('Game Over');
           const currentCfg = getObstacleForLevel(currentLevel, isMobile);
           const currentStackHeight = layers.reduce(
             (acc, l) => acc + (l.height - (l.level === 1 ? 32 : 2)),
@@ -288,6 +309,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
 
         if (isPerfect) {
           soundFx.playPlace(true);
+          soundFx.speak('Perfect');
           setFeedbackToast({
             text: 'PERFECT!',
             subtext: `+${(gain > 0 ? gain : result.multiplierGain).toFixed(2)}x BOOST (${newMultiplier.toFixed(2)}x)`,
@@ -296,6 +318,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
           onPerfectStack();
         } else if (result.status === 'GREAT') {
           soundFx.playPlace(false);
+          soundFx.speak('Great Drop');
           setFeedbackToast({
             text: 'GREAT DROP!',
             subtext: `+${(gain > 0 ? gain : result.multiplierGain).toFixed(2)}x BOOST (${newMultiplier.toFixed(2)}x)`,
@@ -303,6 +326,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
           });
         } else {
           soundFx.playPlace(false);
+          soundFx.speak('Nice');
           setFeedbackToast({
             text: 'NICE STACK!',
             subtext: `+${(gain > 0 ? gain : result.multiplierGain).toFixed(2)}x BOOST (${newMultiplier.toFixed(2)}x)`,
@@ -496,6 +520,44 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
       {/* Background World: Sky Canvas, Floating Clouds, Frame Parallax & Balloons */}
       <CityBackground cameraY={cameraY} />
 
+      {/* Dynamic Mode Start Announcement Banner ("EASY MODE START" / "MEDIUM MODE START" / "HARD MODE START") */}
+      {modeBanner && (
+        <div
+          className={`absolute top-[28%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none select-none transition-all duration-300 transform ${
+            modeBanner.visible ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
+          }`}
+        >
+          <div
+            className={`px-6 sm:px-8 py-3.5 sm:py-4 rounded-3xl border-2 backdrop-blur-2xl shadow-[0_12px_45px_rgba(0,0,0,0.85)] flex flex-col items-center justify-center animate-in zoom-in-95 duration-200 ${
+              modeBanner.mode === 'EASY'
+                ? 'bg-gradient-to-b from-emerald-950/95 to-slate-950/95 border-emerald-400 text-white shadow-[0_0_50px_rgba(16,185,129,0.7)]'
+                : modeBanner.mode === 'HARD'
+                ? 'bg-gradient-to-b from-rose-950/95 to-slate-950/95 border-rose-500 text-white shadow-[0_0_50px_rgba(244,63,94,0.75)]'
+                : 'bg-gradient-to-b from-amber-950/95 to-slate-950/95 border-amber-400 text-white shadow-[0_0_50px_rgba(245,158,11,0.7)]'
+            }`}
+          >
+            {/* Top pill with Vector Icon */}
+            <div className="flex items-center gap-1.5 mb-1 opacity-90">
+              {modeBanner.mode === 'EASY' ? (
+                <Shield className="w-5 h-5 text-emerald-300 fill-emerald-400/30" />
+              ) : modeBanner.mode === 'HARD' ? (
+                <Flame className="w-5 h-5 text-rose-300 fill-rose-400/30" />
+              ) : (
+                <Zap className="w-5 h-5 text-amber-300 fill-amber-400/30" />
+              )}
+              <span className="text-[10px] sm:text-xs font-black tracking-widest uppercase font-mono">
+                DIFFICULTY
+              </span>
+            </div>
+
+            {/* Main Title Text */}
+            <div className="text-xl sm:text-3xl font-black font-mono tracking-wider uppercase drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] whitespace-nowrap">
+              {modeBanner.mode} MODE START
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Center Ultra-Premium Arcade Announcement (Crisp, High-Contrast 3D Punch) */}
       {feedbackToast && (
         <div className="absolute top-[38%] left-1/2 z-50 pointer-events-none select-none flex flex-col items-center justify-center animate-arcade-pop text-center">
@@ -515,9 +577,9 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
           {/* Golden Stars for PERFECT hit */}
           {feedbackToast.type === 'perfect' && (
             <div className="flex items-center gap-1.5 mb-1">
-              <span className="text-yellow-300 text-xl sm:text-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">★</span>
-              <span className="text-yellow-200 text-2xl sm:text-3xl drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)] -translate-y-1">★</span>
-              <span className="text-yellow-300 text-xl sm:text-2xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">★</span>
+              <Star className="w-5 h-5 text-yellow-300 fill-yellow-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" />
+              <Star className="w-7 h-7 text-yellow-200 fill-yellow-200 drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)] -translate-y-1" />
+              <Star className="w-5 h-5 text-yellow-300 fill-yellow-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]" />
             </div>
           )}
 
@@ -558,7 +620,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
           {/* Floating Boost Glassmorphic Pill */}
           {feedbackToast.subtext && (
             <div className="mt-2.5 px-4 py-1 rounded-full bg-slate-950/60 backdrop-blur-md border border-white/20 shadow-[0_4px_20px_rgba(0,0,0,0.6)] flex items-center gap-1.5">
-              <span className="text-yellow-400 text-xs font-bold animate-pulse">⚡</span>
+              <Zap className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400 animate-pulse" />
               <span className="font-extrabold text-xs sm:text-sm text-white font-mono tracking-wider drop-shadow-sm">
                 {feedbackToast.subtext}
               </span>
@@ -593,8 +655,8 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
               transform: `translate3d(${fly.x}px, 0, 0)`,
             }}
           >
-            <div className="bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-slate-950 font-black text-sm sm:text-base px-2.5 py-1 rounded-xl shadow-[0_4px_16px_rgba(245,158,11,0.7)] border border-yellow-100 flex items-center gap-1 font-mono tracking-tight whitespace-nowrap">
-              <span>⚡</span>
+            <div className="bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-slate-950 font-black text-sm sm:text-base px-2.5 py-1 rounded-xl shadow-[0_4px_16px_rgba(245,158,11,0.7)] border border-yellow-100 flex items-center gap-1.5 font-mono tracking-tight whitespace-nowrap">
+              <Zap className="w-3.5 h-3.5 text-slate-950 fill-slate-950" />
               <span>{fly.text}</span>
             </div>
           </div>

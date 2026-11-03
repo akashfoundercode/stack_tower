@@ -1,5 +1,5 @@
 import React from 'react';
-import { Volume2, VolumeX, RotateCcw, ShieldCheck, Sparkles } from 'lucide-react';
+import { Volume2, VolumeX, RotateCcw, ShieldCheck, Sparkles, Building2, History } from 'lucide-react';
 import { soundFx } from '../utils/sound';
 
 interface HeaderProps {
@@ -23,7 +23,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-2.5">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-yellow-500 via-amber-400 to-yellow-300 p-0.5 shadow-md flex items-center justify-center">
           <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
-            <span className="text-xl">🏗️</span>
+            <Building2 className="w-5 h-5 text-yellow-400" />
           </div>
         </div>
         <div>
@@ -74,8 +74,8 @@ export const Header: React.FC<HeaderProps> = ({
           }}
           className="bg-slate-800 hover:bg-slate-700 text-slate-200 p-2 md:px-3 md:py-2 rounded-xl text-xs font-bold border border-slate-700 transition flex items-center gap-1.5 shadow"
         >
+          <History className="w-4 h-4 text-amber-300" />
           <span className="hidden md:inline">History</span>
-          <span>📋</span>
         </button>
 
         {/* Sound Toggle */}

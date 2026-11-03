@@ -43,38 +43,97 @@
   animation: pulseGlow 1.2s infinite alternate ease-in-out;
 }
 
-/* Realistic Distant Hot Air Balloons: Small, Soft, Deep in Background on Outer Edges (NEVER IN CENTER!) */
-@keyframes balloonSideDriftLeft {
+/* =========================================================================
+   CONTINUOUS FLYING HOT AIR BALLOONS (Active flight across the sky)
+   Balloons actively drift across the screen with natural thermal lifts & gentle swaying
+   ========================================================================= */
+@keyframes balloonFlyRight {
   0% {
-    transform: translate3d(0, 0, 0) rotate(-1.5deg);
+    transform: translate3d(-100px, 0px, 0) rotate(-2.5deg);
+    opacity: 0;
+  }
+  3% {
+    opacity: 1;
+  }
+  25% {
+    transform: translate3d(calc(25vw + 20px), -28px, 0) rotate(2deg);
   }
   50% {
-    transform: translate3d(5px, -22px, 0) rotate(1.5deg);
+    transform: translate3d(calc(50vw), 16px, 0) rotate(-1.5deg);
+  }
+  75% {
+    transform: translate3d(calc(75vw - 20px), -32px, 0) rotate(2.5deg);
+  }
+  97% {
+    opacity: 1;
   }
   100% {
-    transform: translate3d(0, 0, 0) rotate(-1.5deg);
+    transform: translate3d(calc(100vw + 110px), -10px, 0) rotate(-1deg);
+    opacity: 0;
   }
 }
 
-@keyframes balloonSideDriftRight {
+@keyframes balloonFlyLeft {
   0% {
-    transform: translate3d(0, 0, 0) rotate(1.5deg);
+    transform: translate3d(calc(100vw + 100px), 0px, 0) rotate(2.5deg);
+    opacity: 0;
+  }
+  3% {
+    opacity: 1;
+  }
+  25% {
+    transform: translate3d(calc(75vw - 20px), 24px, 0) rotate(-2deg);
   }
   50% {
-    transform: translate3d(-6px, -26px, 0) rotate(-1.5deg);
+    transform: translate3d(calc(50vw), -26px, 0) rotate(1.5deg);
+  }
+  75% {
+    transform: translate3d(calc(25vw + 20px), 18px, 0) rotate(-2deg);
+  }
+  97% {
+    opacity: 1;
   }
   100% {
-    transform: translate3d(0, 0, 0) rotate(1.5deg);
+    transform: translate3d(-110px, -15px, 0) rotate(1deg);
+    opacity: 0;
   }
 }
 
-.animate-balloon-side-left {
-  animation: balloonSideDriftLeft 20s ease-in-out infinite alternate;
+@keyframes balloonFlyHigh {
+  0% {
+    transform: translate3d(-80px, 0px, 0) rotate(-1.5deg);
+    opacity: 0;
+  }
+  4% {
+    opacity: 0.85;
+  }
+  30% {
+    transform: translate3d(calc(30vw), -20px, 0) rotate(2deg);
+  }
+  65% {
+    transform: translate3d(calc(65vw), 15px, 0) rotate(-2deg);
+  }
+  96% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate3d(calc(100vw + 90px), -12px, 0) rotate(1deg);
+    opacity: 0;
+  }
+}
+
+.animate-balloon-fly-right {
+  animation: balloonFlyRight 34s linear infinite;
   will-change: transform;
 }
 
-.animate-balloon-side-right {
-  animation: balloonSideDriftRight 24s ease-in-out infinite alternate;
+.animate-balloon-fly-left {
+  animation: balloonFlyLeft 44s linear infinite;
+  will-change: transform;
+}
+
+.animate-balloon-fly-high {
+  animation: balloonFlyHigh 56s linear infinite;
   will-change: transform;
 }
 

@@ -13,6 +13,7 @@ import { Tower } from './Tower';
 import { MovingBlock } from './MovingBlock';
 import { FallingBlock } from './FallingBlock';
 import { soundFx } from '../utils/sound';
+import { Building2 } from 'lucide-react';
 
 interface GameSceneProps {
   gameState: GameState;
@@ -332,7 +333,7 @@ export const GameScene: React.FC<GameSceneProps> = ({
       {gameState === 'IDLE' && (
         <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[2px] z-40 flex flex-col items-center justify-center p-4 text-center pointer-events-none">
           <div className="bg-slate-900/95 border-2 border-yellow-400/80 p-6 rounded-2xl shadow-2xl max-w-xs transform hover:scale-105 transition-all">
-            <span className="text-3xl">🏗️</span>
+            <Building2 className="w-8 h-8 text-yellow-400 mx-auto" />
             <h3 className="text-xl font-extrabold text-white mt-2">
               SKY TOWER CRASH
             </h3>
