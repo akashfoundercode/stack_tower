@@ -5,6 +5,7 @@ import { FullscreenGameScene } from '../components/FullscreenGameScene';
 import { MobileBettingOverlay } from '../components/MobileBettingOverlay';
 import { ResultModal } from '../components/ResultModal';
 import { HistoryModal } from '../components/HistoryModal';
+import { TutorialModal } from '../components/TutorialModal';
 import { soundFx } from '../utils/sound';
 
 const INITIAL_WALLET_BALANCE = 10000;
@@ -37,6 +38,9 @@ export const GamePage: React.FC = () => {
   // Modals
   const [showResultModal, setShowResultModal] = useState<boolean>(false);
   const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false);
+  const [showTutorial, setShowTutorial] = useState<boolean>(() => {
+    return !localStorage.getItem('stack_tower_tutorial_seen');
+  });
   const [roundResult, setRoundResult] = useState<{
     status: 'CASHED_OUT' | 'GAME_OVER';
     payout: number;
@@ -206,6 +210,7 @@ export const GamePage: React.FC = () => {
             soundEnabled={soundEnabled}
             onToggleSound={handleToggleSound}
             onOpenHistory={() => setShowHistoryModal(true)}
+            onOpenTutorial={() => setShowTutorial(true)}
           />
         </header>
 
@@ -247,6 +252,11 @@ export const GamePage: React.FC = () => {
           history={history}
           onClose={() => setShowHistoryModal(false)}
           onClearHistory={handleClearHistory}
+        />
+
+        <TutorialModal
+          isOpen={showTutorial}
+          onClose={() => setShowTutorial(false)}
         />
       </div>
     </div>

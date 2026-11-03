@@ -1,9 +1,11 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { BlockLayer, FallingDebris, GameState } from '../types/game';
 import {
+  BASE_BLOCK_WIDTH,
   COLOR_THEMES,
   calculatePlacement,
-  MAX_SAFE_ALIGNMENT_OFFSET,
+  getDifficultyParams,
+  PERFECT_TOLERANCE_PX,
 } from '../utils/gamePhysics';
 import { CityBackground } from './CityBackground';
 import { Tower } from './Tower';
@@ -209,7 +211,9 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
           dropStartX,
           currentW,
           topPlacedLayer.x,
-          topPlacedLayer.width
+          topPlacedLayer.width,
+          PERFECT_TOLERANCE_PX,
+          currentLevel
         );
 
         if (result.status === 'MISS') {
@@ -333,18 +337,25 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
           );
         });
 
-        // Starting se max 2 obstacles/floors visible on screen - older ones sink downwards!
+        // Camera Sinking: Top box is fully visible, floor underneath it ("jispe gira hai") is AADHA (half) visible!
         const allLayers = [...layers, newLayer];
-        if (allLayers.length > 2) {
-          const sunkenLayers = allLayers.slice(0, allLayers.length - 2);
-          const sinkOffsetY = sunkenLayers.reduce((sum, l) => {
+        if (allLayers.length === 2) {
+          // Level 1 landed on bottom shop: shop sinks down by 55px so its top half/roof is "AADHA" visible
+          setCameraY(55);
+        } else if (allLayers.length > 2) {
+          // Level N landed on Level N-1:
+          // Older floors below N-1 are completely sunken
+          const completelySunken = allLayers.slice(0, allLayers.length - 2);
+          const sumOlder = completelySunken.reduce((sum, l) => {
             if (l.level === 0) {
-              // Net visible height of base shop below level 1 overlap
-              return sum + (l.height - 32);
+              return sum + (l.height - 32 + 55);
             }
             return sum + (l.height - 2);
           }, 0);
-          setCameraY(sinkOffsetY);
+          // Floor N-1 (jispe wo gira hai) is half-sunken so it's "AADHA" visible underneath!
+          const previousFloor = allLayers[allLayers.length - 2];
+          const halfFloorOffset = Math.round(previousFloor.height * 0.48);
+          setCameraY(sumOlder + halfFloorOffset);
         } else {
           setCameraY(0);
         }
@@ -395,9 +406,11 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
       return;
     }
 
-    const SWEEP_TRAVEL = isMobile ? 88 : 110; // Genuine left-right sweep travel across the tower
-    const MAX_SWING_ANGLE = 16.5; // degrees dynamic pendulum tilt swing while traveling
-    const angularSpeed = 2.1 + Math.min(1.5, currentLevel * 0.1);
+    // Dynamic progressive difficulty parameters based on current level milestone
+    const diffParams = getDifficultyParams(currentLevel, isMobile);
+    const SWEEP_TRAVEL = diffParams.sweepTravel; // Travel width across the tower
+    const MAX_SWING_ANGLE = diffParams.maxSwingAngle; // degrees dynamic pendulum tilt swing
+    const angularSpeed = diffParams.angularSpeed; // rad/s swing speed (escalates rapidly at L3, L6, L9+)
 
     const updateFrame = (timestamp: number) => {
       if (!lastTimeRef.current) lastTimeRef.current = timestamp;
@@ -541,6 +554,54 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
         </div>
       )}
 
+      {/* Ek Seedhi Fixed Guide Line Corridor (Matching actual Obstacle PNG image width edge-to-edge) */}
+      {gameState === 'PLAYING' && (() => {
+        const currentDiffParams = getDifficultyParams(currentLevel, isMobile);
+        const isOutOfBounds = Math.abs(movingX) > currentDiffParams.maxSafeOffset;
+
+        return (
+          <div
+            className="absolute inset-x-0 pointer-events-none z-10 flex justify-center select-none"
+            style={{
+              top: `${SWING_TOP + 45}px`,
+              bottom: '176px',
+            }}
+          >
+            <div
+              className="relative h-full pointer-events-none"
+              style={{ width: `${BASE_BLOCK_WIDTH}px` }}
+            >
+              {/* Left Straight Boundary Line */}
+              <div
+                className={`absolute left-0 top-0 bottom-0 w-[2px] border-l-2 border-dashed transition-colors duration-150 ${
+                  isOutOfBounds
+                    ? 'border-rose-500/90 drop-shadow-[0_0_8px_#f43f5e]'
+                    : 'border-yellow-300/80 drop-shadow-[0_0_6px_#facc15]'
+                }`}
+              />
+
+              {/* Right Straight Boundary Line */}
+              <div
+                className={`absolute right-0 top-0 bottom-0 w-[2px] border-r-2 border-dashed transition-colors duration-150 ${
+                  isOutOfBounds
+                    ? 'border-rose-500/90 drop-shadow-[0_0_8px_#f43f5e]'
+                    : 'border-yellow-300/80 drop-shadow-[0_0_6px_#facc15]'
+                }`}
+              />
+
+              {/* Subtle corridor glow tint */}
+              <div
+                className={`absolute inset-0 transition-colors duration-150 ${
+                  isOutOfBounds
+                    ? 'bg-rose-500/[0.04]'
+                    : 'bg-yellow-300/[0.03]'
+                }`}
+              />
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Camera Stage: Sits comfortably on mobile and slightly lowered on desktop */}
       <div
         className="absolute inset-x-0 bottom-44 sm:bottom-46 md:bottom-[184px] flex flex-col items-center justify-end transition-transform duration-300 ease-out will-change-transform pointer-events-none"
@@ -553,12 +614,6 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
           <Tower
             ref={towerRef}
             layers={layers}
-            isOutOfBounds={
-              gameState === 'PLAYING' &&
-              layers.length > 0 &&
-              Math.abs(movingX - layers[layers.length - 1].x) > MAX_SAFE_ALIGNMENT_OFFSET
-            }
-            showBoundaryLines={false}
           />
         </div>
 

@@ -8,10 +8,10 @@ import obs3 from '../assets/obstacle/obs3.png';
 import obs4 from '../assets/obstacle/obs4.png';
 
 // Exact configurations for each obstacle matching its 100% natural aspect ratio
-// Scaled to compact, natural floor proportions so it fits cleanly on the shop and hook!
+// Unified standard width (148px) matching the PNG image size and the straight guide corridor edge-to-edge!
 export const OBSTACLE_CONFIGS = [
-  { img: obs1, width: 140, height: 106 },
-  { img: obs2, width: 140, height: 99 },
+  { img: obs1, width: 148, height: 112 },
+  { img: obs2, width: 148, height: 104 },
   { img: obs3, width: 148, height: 83 },
   { img: obs4, width: 148, height: 81 },
 ];

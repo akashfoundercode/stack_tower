@@ -8,26 +8,44 @@ interface MobileHeaderProps {
   soundEnabled: boolean;
   onToggleSound: () => void;
   onOpenHistory: () => void;
+  onOpenTutorial?: () => void;
 }
 
 export const MobileHeader: React.FC<MobileHeaderProps> = ({
   demoBalance,
   onResetBalance,
   onOpenHistory,
+  onOpenTutorial,
 }) => {
   return (
     <div className="w-full px-4 pt-3 pb-2 flex items-center justify-between pointer-events-auto bg-transparent">
-      {/* Left: Hamburger Menu (Clean glass button) */}
-      <button
-        onClick={() => {
-          soundFx.playClick();
-          onOpenHistory();
-        }}
-        className="text-white hover:text-white p-2 rounded-xl bg-sky-950/30 hover:bg-sky-950/50 backdrop-blur-md border border-white/20 active:scale-95 transition shadow-sm"
-        title="Menu & History"
-      >
-        <Menu className="w-5 h-5 stroke-[2.5]" />
-      </button>
+      {/* Left: Hamburger Menu + How To Play (?) Button */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => {
+            soundFx.playClick();
+            onOpenHistory();
+          }}
+          className="text-white hover:text-white p-2 rounded-xl bg-sky-950/30 hover:bg-sky-950/50 backdrop-blur-md border border-white/20 active:scale-95 transition shadow-sm"
+          title="Menu & History"
+        >
+          <Menu className="w-5 h-5 stroke-[2.5]" />
+        </button>
+
+        {onOpenTutorial && (
+          <button
+            onClick={() => {
+              soundFx.playClick();
+              onOpenTutorial();
+            }}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-sky-950/30 hover:bg-sky-950/50 backdrop-blur-md border border-white/20 active:scale-95 transition shadow-sm text-xs font-black text-amber-300 hover:text-white"
+            title="How to Play Tutorial"
+          >
+            <span className="text-sm">❓</span>
+            <span className="hidden sm:inline font-mono uppercase tracking-wider text-[11px]">Help</span>
+          </button>
+        )}
+      </div>
 
       {/* Center / Right: Network signal + ID and Currency Balance */}
       <div className="flex items-center gap-2.5">
