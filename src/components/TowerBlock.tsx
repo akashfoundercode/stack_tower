@@ -55,16 +55,20 @@ export const OBSTACLE_CONFIGS = [
   { img: obs3, width: 148, height: 83 },
   { img: obs4, width: 148, height: 81 },
 ];
-// Obstacle scale multiplier (1.0 ensures 100% natural, full size matching the shop)
-export const MOBILE_OBSTACLE_SCALE = 1.0;
+// Obstacle scale multiplier (0.93 gives a delicate, subtle reduction on mobile screens)
+export const MOBILE_OBSTACLE_SCALE = 0.93;
 
 export function getObstacleForLevel(level: number, isMobile = false) {
+  const scale = isMobile ? MOBILE_OBSTACLE_SCALE : 1.0;
   if (level === 0) {
-    return { img: bottomShopImg, width: BASE_BLOCK_WIDTH, height: BLOCK_HEIGHT };
+    return {
+      img: bottomShopImg,
+      width: Math.round(BASE_BLOCK_WIDTH * scale),
+      height: Math.round(BLOCK_HEIGHT * scale),
+    };
   }
   const index = (level - 1) % OBSTACLE_CONFIGS.length;
   const cfg = OBSTACLE_CONFIGS[index];
-  const scale = isMobile ? MOBILE_OBSTACLE_SCALE : 1.0;
   return {
     img: cfg.img,
     width: Math.round(cfg.width * scale),
