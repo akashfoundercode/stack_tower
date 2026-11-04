@@ -47,7 +47,6 @@ export const SafeGameImage: React.FC<React.ImgHTMLAttributes<HTMLImageElement>> 
     />
   );
 };
-
 // Exact configurations for each obstacle matching its 100% natural aspect ratio
 // Unified standard width (148px) matching the PNG image size and the straight guide corridor edge-to-edge!
 export const OBSTACLE_CONFIGS = [
@@ -56,7 +55,6 @@ export const OBSTACLE_CONFIGS = [
   { img: obs3, width: 148, height: 83 },
   { img: obs4, width: 148, height: 81 },
 ];
-
 // Obstacle scale multiplier (1.0 ensures 100% natural, full size matching the shop)
 export const MOBILE_OBSTACLE_SCALE = 1.0;
 

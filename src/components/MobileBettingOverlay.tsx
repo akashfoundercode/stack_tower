@@ -15,6 +15,8 @@ interface MobileBettingOverlayProps {
   level: number;
   demoBalance: number;
   difficulty?: GameDifficulty;
+  minBet?: number;
+  maxBet?: number;
 }
 
 const MobileBettingOverlayComponent: React.FC<MobileBettingOverlayProps> = ({
@@ -28,6 +30,8 @@ const MobileBettingOverlayComponent: React.FC<MobileBettingOverlayProps> = ({
   level,
   demoBalance,
   difficulty = 'MEDIUM',
+  minBet = 10,
+  maxBet = 50000,
 }) => {
   const isPlaying = gameState === 'PLAYING';
   const potentialPayout = Math.floor(betAmount * multiplier * 100) / 100;
@@ -35,20 +39,23 @@ const MobileBettingOverlayComponent: React.FC<MobileBettingOverlayProps> = ({
 
   const handleAdjust = (delta: number) => {
     soundFx.playClick();
-    const next = Math.max(10, Math.min(demoBalance, betAmount + delta));
+    const effectiveMax = Math.min(demoBalance, maxBet);
+    const next = Math.max(minBet, Math.min(effectiveMax, betAmount + delta));
     onBetChange(next);
   };
 
   const handleAllIn = () => {
     soundFx.playClick();
     soundFx.speak('All In');
-    onBetChange(Math.max(10, demoBalance));
+    const effectiveAllIn = Math.min(demoBalance, maxBet);
+    onBetChange(Math.max(minBet, effectiveAllIn));
   };
 
   const handleDouble = () => {
     soundFx.playClick();
     soundFx.speak('Double');
-    const next = Math.min(demoBalance, betAmount * 2);
+    const effectiveMax = Math.min(demoBalance, maxBet);
+    const next = Math.min(effectiveMax, betAmount * 2);
     onBetChange(next);
   };
 

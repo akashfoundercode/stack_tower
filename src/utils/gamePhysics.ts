@@ -25,9 +25,27 @@ export interface DifficultyParams {
 export function getDifficultyParams(
   _level: number = 1,
   isMobile: boolean = false,
-  difficulty: GameDifficulty = 'MEDIUM'
+  difficulty: GameDifficulty = 'MEDIUM',
+  apiConfig?: { angular_speed: number; max_swing_angle: number; max_safe_offset: number }
 ): DifficultyParams {
   const baseTravel = isMobile ? 88 : 110;
+
+  if (apiConfig) {
+    return {
+      angularSpeed: apiConfig.angular_speed,
+      maxSwingAngle: apiConfig.max_swing_angle,
+      sweepTravel:
+        difficulty === 'EASY'
+          ? Math.round(baseTravel * 0.9)
+          : difficulty === 'HARD'
+          ? Math.round(baseTravel * 1.1)
+          : baseTravel,
+      safeOffsetRatio: apiConfig.max_safe_offset / BASE_BLOCK_WIDTH,
+      maxSafeOffset: apiConfig.max_safe_offset,
+      greatThreshold: Math.round(apiConfig.max_safe_offset * 0.6),
+      goodThreshold: apiConfig.max_safe_offset,
+    };
+  }
 
   if (difficulty === 'EASY') {
     return {
@@ -229,12 +247,13 @@ export function calculatePlacement(
   _targetWidth: number,
   tolerance = PERFECT_TOLERANCE_PX,
   level = 1,
-  difficulty: GameDifficulty = 'MEDIUM'
+  difficulty: GameDifficulty = 'MEDIUM',
+  apiConfig?: { angular_speed: number; max_swing_angle: number; max_safe_offset: number }
 ): PlacementResult {
   const diff = movingX - targetX;
   const absDiff = Math.abs(diff);
 
-  const diffParams = getDifficultyParams(level, false, difficulty);
+  const diffParams = getDifficultyParams(level, false, difficulty, apiConfig);
   const maxSafeOffset = diffParams.maxSafeOffset;
 
   // 1. MISS: Box dropped outside straight corridor guide lines or target threshold
