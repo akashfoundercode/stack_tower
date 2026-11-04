@@ -26,6 +26,7 @@ export interface UserProfileData {
   token?: string;
   login_token?: string;
   username: string;
+  userimage?: string;
   mobile: string;
   email: string | null;
   u_id: string;
@@ -36,6 +37,26 @@ export interface UserProfileData {
   recharge?: number;
   status?: string;
   type?: string;
+}
+
+export interface UserProfileResponse {
+  status: string | number;
+  message?: string;
+  wallet?: number;
+  winning_wallet?: number;
+  total_wallet?: number;
+  data: UserProfileData;
+}
+
+export interface UpdateProfileRequest {
+  username?: string;
+  userimage?: string;
+}
+
+export interface UpdateProfileResponse {
+  status: string | number;
+  message: string;
+  data?: unknown;
 }
 
 export interface LoginResponse {

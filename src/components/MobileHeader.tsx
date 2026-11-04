@@ -12,9 +12,11 @@ interface MobileHeaderProps {
   onOpenTutorial?: () => void;
   onOpenStats?: () => void;
   onOpenLogin?: () => void;
+  onOpenProfile?: () => void;
   isLoggedIn?: boolean;
   userId?: string | number;
   username?: string;
+  userimage?: string;
   difficulty?: GameDifficulty;
   onDifficultyChange?: (mode: GameDifficulty) => void;
   gameState?: GameState;
@@ -26,8 +28,10 @@ const MobileHeaderComponent: React.FC<MobileHeaderProps> = ({
   onOpenTutorial,
   onOpenStats,
   onOpenLogin,
+  onOpenProfile,
   isLoggedIn = false,
-  userId = '489214',
+  userId = 'ADMIN_123',
+  userimage,
   difficulty = 'MEDIUM',
   onDifficultyChange,
   gameState = 'IDLE',
@@ -158,32 +162,46 @@ const MobileHeaderComponent: React.FC<MobileHeaderProps> = ({
       {/* Right: Network signal + ID and Currency Balance */}
       <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
         {/* Auth / Login Status Pill */}
-        {onOpenLogin && (
-          <button
-            onClick={() => {
-              soundFx.playClick();
+        <button
+          onClick={() => {
+            soundFx.playClick();
+            if (isLoggedIn && onOpenProfile) {
+              onOpenProfile();
+            } else if (onOpenLogin) {
               onOpenLogin();
-            }}
-            className={`px-2 py-1 sm:py-1.5 rounded-xl border flex items-center gap-1 active:scale-95 transition shadow-sm font-mono text-[10px] sm:text-xs font-black uppercase ${
-              isLoggedIn
-                ? 'bg-emerald-950/50 border-emerald-500/50 text-emerald-300'
-                : 'bg-amber-500 hover:bg-amber-400 text-slate-950 border-yellow-300 animate-pulse'
-            }`}
-            title={isLoggedIn ? 'Account Verified (Click to view)' : 'Click to Login'}
-          >
-            {isLoggedIn ? (
-              <>
+            }
+          }}
+          className={`px-2 py-1 sm:py-1.5 rounded-xl border flex items-center gap-1 active:scale-95 transition shadow-sm font-mono text-[10px] sm:text-xs font-black uppercase ${
+            isLoggedIn
+              ? 'bg-emerald-950/50 border-emerald-500/50 text-emerald-300 hover:bg-emerald-900/60'
+              : 'bg-amber-500 hover:bg-amber-400 text-slate-950 border-yellow-300 animate-pulse'
+          }`}
+          title={isLoggedIn ? 'Player Profile (Click to view & update)' : 'Click to Login'}
+        >
+          {isLoggedIn ? (
+            <>
+              {userimage && userimage.startsWith('http') ? (
+                <img
+                  src={userimage}
+                  alt="Avatar"
+                  className="w-3.5 h-3.5 rounded-full object-cover border border-emerald-400"
+                  onError={(e) => {
+                    // Fallback to icon on image error
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              ) : (
                 <UserCheck className="w-3 h-3 text-emerald-400" />
-                <span className="hidden sm:inline">Auth</span>
-              </>
-            ) : (
-              <>
-                <LogIn className="w-3 h-3 text-slate-950" />
-                <span>Login</span>
-              </>
-            )}
-          </button>
-        )}
+              )}
+              <span className="hidden sm:inline">Profile</span>
+            </>
+          ) : (
+            <>
+              <LogIn className="w-3 h-3 text-slate-950" />
+              <span>Login</span>
+            </>
+          )}
+        </button>
 
         {/* Right Info: ID & Balance (green signal bar + ID + INR) - Non-clickable balance display */}
         <div className="flex flex-col items-end leading-none bg-sky-950/40 backdrop-blur-md border border-white/20 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl shadow-sm select-none">
@@ -195,7 +213,10 @@ const MobileHeaderComponent: React.FC<MobileHeaderProps> = ({
           </div>
           <div className="flex items-center gap-1">
             <span className="text-xs sm:text-base font-black text-white font-mono tracking-tight">
-              {Math.floor(demoBalance).toLocaleString('en-IN')}
+              {demoBalance.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </span>
             <span className="text-[9px] sm:text-[10px] font-extrabold text-amber-300">INR</span>
           </div>

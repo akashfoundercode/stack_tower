@@ -9,12 +9,13 @@ import { TutorialModal } from '../components/TutorialModal';
 import { GameLoader } from '../components/GameLoader';
 import { UserStatsModal } from '../components/UserStatsModal';
 import { LoginModal } from '../components/LoginModal';
+import { ProfileModal } from '../components/ProfileModal';
 import { soundFx } from '../utils/sound';
 import { useGameConfig } from '../hooks/useGameConfig';
 import { stackTowerService, socketService, authService } from '../api';
 import { UserProfileData } from '../api/types';
 
-const INITIAL_WALLET_BALANCE = 1000;
+const INITIAL_WALLET_BALANCE = 21434.38;
 
 export const GamePage: React.FC = () => {
   // Load dynamic API game config (min_bet, max_bet, quick_bets, difficulties)
@@ -24,6 +25,7 @@ export const GamePage: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<UserProfileData | null>(() => authService.getStoredUser());
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => authService.isAuthenticated());
   const [showLoginModal, setShowLoginModal] = useState<boolean>(() => !authService.isAuthenticated());
+  const [showProfileModal, setShowProfileModal] = useState<boolean>(false);
 
   // Preloader State: Game only reveals after all images are 100% loaded and decoded
   const [isAssetsLoaded, setIsAssetsLoaded] = useState<boolean>(false);
@@ -111,16 +113,85 @@ export const GamePage: React.FC = () => {
     }
   }, [showHistoryModal]);
 
+  // Synchronize live profile & wallet balance from GET /api/profile when authenticated
+  useEffect(() => {
+    if (authService.isAuthenticated()) {
+      authService
+        .fetchProfile()
+        .then((profileRes) => {
+          if (profileRes) {
+            if (profileRes.data) {
+              setCurrentUser(profileRes.data);
+            }
+            const liveWallet =
+              typeof profileRes.wallet === 'number'
+                ? profileRes.wallet
+                : typeof profileRes.total_wallet === 'number'
+                ? profileRes.total_wallet
+                : profileRes.data?.wallet ?? profileRes.data?.total_wallet;
+
+            if (typeof liveWallet === 'number' && !isNaN(liveWallet)) {
+              setDemoBalance(liveWallet);
+            }
+          }
+        })
+        .catch((err) => {
+          console.warn('[GamePage] fetchProfile on init warning:', err);
+        });
+    }
+  }, [isLoggedIn]);
+
   // Handle successful login
-  const handleLoginSuccess = (user: UserProfileData) => {
+  const handleLoginSuccess = async (user: UserProfileData) => {
     setCurrentUser(user);
     setIsLoggedIn(true);
     setShowLoginModal(false);
-    if (typeof user.total_wallet === 'number') {
-      setDemoBalance(user.total_wallet);
-    } else if (typeof user.wallet === 'number') {
-      setDemoBalance(user.wallet);
+
+    // Initial wallet from login response
+    const initialBal =
+      typeof user.total_wallet === 'number'
+        ? user.total_wallet
+        : typeof user.wallet === 'number'
+        ? user.wallet
+        : 1000;
+    setDemoBalance(initialBal);
+
+    // Fetch fresh profile from GET /api/profile to guarantee live wallet balance
+    try {
+      const profileRes = await authService.fetchProfile();
+      if (profileRes) {
+        if (profileRes.data) {
+          setCurrentUser(profileRes.data);
+        }
+        const liveWallet =
+          typeof profileRes.wallet === 'number'
+            ? profileRes.wallet
+            : typeof profileRes.total_wallet === 'number'
+            ? profileRes.total_wallet
+            : profileRes.data?.wallet ?? profileRes.data?.total_wallet;
+
+        if (typeof liveWallet === 'number' && !isNaN(liveWallet)) {
+          setDemoBalance(liveWallet);
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to refresh profile after login:', err);
     }
+  };
+
+  const handleProfileUpdated = (updatedUser: UserProfileData, newBalance: number) => {
+    setCurrentUser(updatedUser);
+    if (typeof newBalance === 'number' && !isNaN(newBalance)) {
+      setDemoBalance(newBalance);
+    }
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+    setIsLoggedIn(false);
+    setCurrentUser(null);
+    setShowProfileModal(false);
+    setShowLoginModal(true);
   };
 
   // START GAME / PLACE BET (Token must be stored before match can run)
@@ -334,9 +405,11 @@ export const GamePage: React.FC = () => {
             onOpenTutorial={() => setShowTutorial(true)}
             onOpenStats={() => setShowStatsModal(true)}
             onOpenLogin={() => setShowLoginModal(true)}
+            onOpenProfile={() => setShowProfileModal(true)}
             isLoggedIn={isLoggedIn}
-            userId={currentUser?.u_id || currentUser?.id || '489214'}
-            username={currentUser?.username || 'User'}
+            userId={currentUser?.u_id || currentUser?.id || 'ADMIN_123'}
+            username={currentUser?.username || 'Admin'}
+            userimage={currentUser?.userimage}
             difficulty={difficulty}
             onDifficultyChange={setDifficulty}
             gameState={gameState}
@@ -395,6 +468,15 @@ export const GamePage: React.FC = () => {
           isOpen={showLoginModal}
           onClose={() => setShowLoginModal(false)}
           onLoginSuccess={handleLoginSuccess}
+        />
+
+        <ProfileModal
+          isOpen={showProfileModal}
+          onClose={() => setShowProfileModal(false)}
+          currentUser={currentUser}
+          walletBalance={demoBalance}
+          onProfileUpdated={handleProfileUpdated}
+          onLogout={handleLogout}
         />
 
         <TutorialModal

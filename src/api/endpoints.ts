@@ -6,13 +6,25 @@
  */
 
 export const API_ENDPOINTS = {
-  // Authentication Endpoints
+  // Authentication & Profile Endpoints
   AUTH: {
     /**
      * User Login API
      * POST /api/login
      */
     LOGIN: '/api/login',
+
+    /**
+     * Fetch User Profile & Wallet Balance API
+     * GET /api/profile
+     */
+    PROFILE: '/api/profile',
+
+    /**
+     * Update Profile API (username, userimage)
+     * POST /api/update_profile
+     */
+    UPDATE_PROFILE: '/api/update_profile',
   },
 
   // Stack Tower Game Endpoints

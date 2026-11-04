@@ -7,7 +7,7 @@ import { soundFx } from '../utils/sound';
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLoginSuccess: (user: UserProfileData, token: string) => void;
+  onLoginSuccess: (user: UserProfileData, token: string, wallet?: number) => void;
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({
@@ -15,8 +15,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   onClose,
   onLoginSuccess,
 }) => {
-  const [mobile, setMobile] = useState<string>('9876543210');
-  const [password, setPassword] = useState<string>('password123');
+  const [mobile, setMobile] = useState<string>('1234567890');
+  const [password, setPassword] = useState<string>('12345678');
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -34,6 +34,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     soundFx.playClick();
 
     try {
+      // 1. POST /api/login: Get authentication token
       const response = await authService.login({
         mobile: mobile.trim(),
         identity: mobile.trim(),
@@ -42,10 +43,21 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       });
 
       const token = response.token || response.data?.token || '';
-      const user = response.data;
+
+      // 2. GET /api/profile: Immediately fetch profile with the stored token
+      const profileRes = await authService.fetchProfile(token);
+      const user = profileRes.data || response.data;
+      const liveWallet =
+        typeof profileRes.wallet === 'number'
+          ? profileRes.wallet
+          : typeof profileRes.total_wallet === 'number'
+          ? profileRes.total_wallet
+          : typeof user.wallet === 'number'
+          ? user.wallet
+          : response.wallet ?? 21434.38;
 
       soundFx.speak('Login successful');
-      onLoginSuccess(user, token);
+      onLoginSuccess(user, token, liveWallet);
       onClose();
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Login failed, please check credentials');
@@ -56,8 +68,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
   const handleQuickFill = () => {
     soundFx.playClick();
-    setMobile('9876543210');
-    setPassword('password123');
+    setMobile('1234567890');
+    setPassword('12345678');
     setErrorMsg(null);
   };
 

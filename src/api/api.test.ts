@@ -422,4 +422,76 @@ describe('API Architecture & Structure', () => {
     expect(authService.isAuthenticated()).toBe(false);
     expect(authService.getStoredToken()).toBeNull();
   });
+
+  it('fetches profile and updates live wallet balance via GET /api/profile', async () => {
+    const mockProfileResponse = {
+      status: 200,
+      wallet: 3500.5,
+      winning_wallet: 1500,
+      total_wallet: 3500.5,
+      data: {
+        id: 15,
+        username: 'StackMaster',
+        userimage: '2',
+        mobile: '9876543210',
+        email: null,
+        u_id: '489214',
+        wallet: 3500.5,
+        winning_wallet: 1500,
+        total_wallet: 3500.5,
+      },
+    };
+
+    const fetchSpy = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => mockProfileResponse,
+    });
+    globalThis.fetch = fetchSpy;
+
+    const res = await authService.fetchProfile('dummy_token_123');
+    expect(res.wallet).toBe(3500.5);
+    expect(authService.getStoredUser()?.username).toBe('StackMaster');
+    expect(authService.getStoredUser()?.wallet).toBe(3500.5);
+    expect(store['stack_tower_balance']).toBe('3500.5');
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://api.wingo4all.site/api/profile',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer dummy_token_123',
+        }),
+      })
+    );
+  });
+
+  it('updates profile username and userimage via POST /api/update_profile', async () => {
+    const mockUpdateResponse = {
+      status: 200,
+      message: 'Successfully updated',
+    };
+
+    const fetchSpy = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => mockUpdateResponse,
+    });
+    globalThis.fetch = fetchSpy;
+
+    const res = await authService.updateProfile({
+      username: 'ProBuilder',
+      userimage: '3',
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.message).toBe('Successfully updated');
+    expect(fetchSpy).toHaveBeenCalledWith(
+      'https://api.wingo4all.site/api/update_profile',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ username: 'ProBuilder', userimage: '3' }),
+      })
+    );
+  });
 });
