@@ -66,19 +66,14 @@ const CityBackgroundComponent: React.FC<CityBackgroundProps> = ({ cameraY = 0 })
           />
         </div>
 
-        {/* Ground Frame 1 (FRAMES (1).png) with Sun Light Reflections Right on the Center Sun */}
+        {/* Ground Frame 1 (FRAMES (1).png) with Sun Light Reflections Rising from Behind Frame */}
         <div className="relative w-full h-full pointer-events-none">
-          <SafeGameImage
-            src={frameBg}
-            alt="Ground World Background Frame"
-            className="w-full h-full object-cover object-bottom relative z-10"
-          />
-
           {/* =========================================================================
-              REALISTIC SUN LIGHT REFLECTION & RAYS (COMPLETE 360° CIRCULAR REFLECTION)
-              Full circular radial reflection, 360° sunbeams, corona & lens reflection
+              REALISTIC SUN LIGHT REFLECTION & RAYS (EMERGES FROM BEHIND FRAME BUILDINGS)
+              Placed at z-[5] BEHIND frameBg (z-10) so it emerges from behind the city
+              skyline and smoothly ascends into the sky, settling at its resting position.
               ========================================================================= */}
-          <div className="absolute left-1/2 -translate-x-1/2 bottom-[40.5%] z-20 pointer-events-none select-none flex items-center justify-center">
+          <div className="absolute left-1/2 bottom-[40.5%] z-[5] pointer-events-none select-none flex items-center justify-center animate-sunrise-rise">
             {/* 1. Complete 360° Atmospheric Circular Sky Glow */}
             <div
               className="absolute w-[380px] sm:w-[480px] h-[380px] sm:h-[480px] rounded-full pointer-events-none animate-sun-pulse"
@@ -170,6 +165,12 @@ const CityBackgroundComponent: React.FC<CityBackgroundProps> = ({ cameraY = 0 })
               }}
             />
           </div>
+
+          <SafeGameImage
+            src={frameBg}
+            alt="Ground World Background Frame"
+            className="w-full h-full object-cover object-bottom relative z-10"
+          />
         </div>
       </div>
 

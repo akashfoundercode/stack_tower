@@ -373,5 +373,32 @@
   will-change: transform, opacity;
 }
 
+/* Cinematic Sunrise: Sun emerges from behind frame buildings and settles into position */
+@keyframes sunriseRise {
+  0% {
+    transform: translate(-50%, 220px) scale(0.6);
+    opacity: 0.1;
+    filter: brightness(0.7);
+  }
+  25% {
+    opacity: 0.7;
+  }
+  75% {
+    transform: translate(-50%, -6px) scale(1.02);
+    opacity: 1;
+    filter: brightness(1.06);
+  }
+  100% {
+    transform: translate(-50%, 0px) scale(1);
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+.animate-sunrise-rise {
+  animation: sunriseRise 3.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity, filter;
+}
+
 
 

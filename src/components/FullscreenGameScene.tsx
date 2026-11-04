@@ -15,19 +15,7 @@ import { FallingBlock } from './FallingBlock';
 import { getObstacleForLevel } from './TowerBlock';
 import { soundFx } from '../utils/sound';
 import { Star, Zap, Shield, Flame } from 'lucide-react';
-import obs1 from '../assets/obstacle/obs1.png';
-import obs2 from '../assets/obstacle/obs2.png';
-import obs3 from '../assets/obstacle/obs3.png';
-import obs4 from '../assets/obstacle/obs4.png';
 import { socketService } from '../api';
-
-const OBSTACLE_IMAGES: Record<string, string> = {
-  WRECKING_BALL: obs1,
-  METEOR: obs2,
-  ANVIL: obs3,
-  ROCK: obs4,
-  BIRD: obs1,
-};
 
 interface FullscreenGameSceneProps {
   gameState: GameState;
@@ -109,11 +97,8 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
     visible: boolean;
   } | null>(null);
 
-  // Admin Instant Obstacle Drop (Socket.IO trigger)
-  const [adminObstacle, setAdminObstacle] = useState<{
-    type: string;
-    img: string;
-  } | null>(null);
+  // Seamless Admin Force-Stop Flag (Forces a natural game miss on next build/drop without alerting player)
+  const isForceMissScheduledRef = useRef<boolean>(false);
 
   // Winch-down descent animation (Crane lowers obstacle smoothly from above the ceiling!)
   const [winchY, setWinchY] = useState<number>(0);
@@ -201,63 +186,29 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
     }
   }, [gameState, isMobile, difficulty, startWinchDown]);
 
-  // Real-time Admin Force-Stop / Obstacle Drop Listener via Socket.IO
-  useEffect(() => {
-    const unsubscribe = socketService.onObstacleDropped((data) => {
-      if (gameState !== 'PLAYING') return;
-
-      soundFx.playGameOver();
-      soundFx.speak('Obstacle Dropped!');
-
-      const obstacleType = (data.obstacle_type || 'WRECKING_BALL').toUpperCase();
-      const obstacleImg = OBSTACLE_IMAGES[obstacleType] || obs1;
-
-      setAdminObstacle({
-        type: obstacleType,
-        img: obstacleImg,
-      });
-
-      // Calculate tower height to collapse all stacked blocks
-      const currentStackHeight = layers.reduce(
-        (acc, l) => acc + (l.height - (l.level === 1 ? 32 : 2)),
-        0
-      );
-
-      const collapseDebris: FallingDebris[] = layers.slice(1).map((l, idx) => ({
-        id: `obs-drop-debris-${idx}-${Date.now()}`,
-        x: l.x,
-        bottom: currentStackHeight - idx * 40,
-        width: l.width,
-        height: l.height,
-        direction: idx % 2 === 0 ? 'left' : 'right',
-        image: getObstacleForLevel(l.level, isMobile).img,
-      }));
-
-      setDebris(collapseDebris);
-
-      // Conclude round with 0 payout as requested by user specification
-      setTimeout(() => {
-        onGameOver(data.level_dropped ?? Math.max(0, currentLevel - 1), 0);
-        setAdminObstacle(null);
-      }, 1400);
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [gameState, layers, isMobile, currentLevel, onGameOver]);
-
   // Drop block placement with physics drop & natural resting tilt (box does NOT get cut!)
   const handleDropBlock = useCallback(() => {
     if (gameState !== 'PLAYING' || isPlacingRef.current || isLoweringRef.current) return;
     isPlacingRef.current = true;
     setIsDropping(true);
 
-    const dropStartX = movingXRef.current;
+    let dropStartX = movingXRef.current;
     const dropStartTilt = movingTiltRef.current;
     const currentW = movingWidthRef.current;
     const currentCfg = getObstacleForLevel(currentLevel, isMobile);
     const topPlacedLayer = layers[layers.length - 1];
+
+    // Check if Admin Force Miss was triggered:
+    // The user will never suspect Admin intervention: when they press BUILD / spacebar,
+    // the block simply drops outside the safe landing line and naturally falls off like a standard missed drop!
+    const isForcedMiss = isForceMissScheduledRef.current;
+    if (isForcedMiss) {
+      isForceMissScheduledRef.current = false;
+      const safeOffset = difficultyConfig?.[difficulty]?.max_safe_offset ?? 20;
+      const direction = dropStartX >= topPlacedLayer.x ? 1 : -1;
+      // Shift dropStartX just outside the safe line so it visibly overshoots/undershoots the roof
+      dropStartX = topPlacedLayer.x + direction * (safeOffset + 14);
+    }
 
     // Measure exact tower roof position relative to game container
     const containerRect = containerRef.current?.getBoundingClientRect();
@@ -308,7 +259,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
           difficultyConfig?.[difficulty]
         );
 
-        if (result.status === 'MISS') {
+        if (result.status === 'MISS' || isForcedMiss) {
           soundFx.playGameOver();
           soundFx.speak('Game Over');
           const currentCfg = getObstacleForLevel(currentLevel, isMobile);
@@ -337,7 +288,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
 
           // Allow the user to visibly see the box tumble & fall before Game Over modal appears
           setTimeout(() => {
-            onGameOver(currentLevel - 1, currentMultiplier);
+            onGameOver(Math.max(0, currentLevel - 1), 0);
           }, 1150);
           return;
         }
@@ -497,6 +448,37 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
       handleDropBlock();
     }
   }, [buildTrigger, handleDropBlock]);
+
+  // Reset force miss flag when gameState is not PLAYING
+  useEffect(() => {
+    if (gameState !== 'PLAYING') {
+      isForceMissScheduledRef.current = false;
+    }
+  }, [gameState]);
+
+  // Real-time Admin Force-Stop: Schedules an invisible, natural miss on next block drop
+  // Player never suspects admin intervention: block simply falls outside the safe landing margin
+  useEffect(() => {
+    const unsubscribe = socketService.onObstacleDropped((data) => {
+      if (gameState !== 'PLAYING') return;
+
+      console.log('[Admin Control] Seamless force-miss scheduled for round:', data.round_id);
+      isForceMissScheduledRef.current = true;
+
+      // If user does not press BUILD within 2.5 seconds, auto-release block so it drops outside and misses naturally
+      const autoDropTimer = setTimeout(() => {
+        if (gameState === 'PLAYING' && !isPlacingRef.current && isForceMissScheduledRef.current) {
+          handleDropBlock();
+        }
+      }, 2500);
+
+      return () => clearTimeout(autoDropTimer);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [gameState, handleDropBlock]);
 
   // Master RAF loop for pendulum swing & crane winch descent
   useEffect(() => {
@@ -754,27 +736,6 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
           hookX={hookX}
           winchY={winchY}
         />
-      )}
-
-      {/* Real-time Admin Obstacle Drop Overlay (Instant collapse on obstacle_dropped event) */}
-      {adminObstacle && (
-        <div className="absolute inset-0 z-50 pointer-events-none flex flex-col items-center justify-center animate-in fade-in duration-150">
-          {/* Top Danger Flasher */}
-          <div className="absolute top-[18%] px-5 py-2.5 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white font-black font-mono tracking-widest text-xs sm:text-sm border-2 border-yellow-300 shadow-[0_0_50px_rgba(239,68,68,0.9)] animate-bounce uppercase flex items-center gap-2">
-            <Flame className="w-4 h-4 text-yellow-300 fill-yellow-300 animate-pulse" />
-            <span>OBSTACLE DROPPED: {adminObstacle.type}</span>
-            <Flame className="w-4 h-4 text-yellow-300 fill-yellow-300 animate-pulse" />
-          </div>
-
-          {/* Heavy Obstacle Plunging Down onto Tower */}
-          <div className="absolute top-[30%] w-24 h-24 sm:w-32 sm:h-32 animate-in slide-in-from-top-full duration-500 drop-shadow-[0_20px_35px_rgba(0,0,0,0.9)] flex items-center justify-center">
-            <img
-              src={adminObstacle.img}
-              alt={adminObstacle.type}
-              className="w-full h-full object-contain filter brightness-110 drop-shadow-[0_0_15px_rgba(239,68,68,0.7)]"
-            />
-          </div>
-        </div>
       )}
     </div>
   );
