@@ -72,9 +72,9 @@ const CityBackgroundComponent: React.FC<CityBackgroundProps> = ({ cameraY = 0 })
               REALISTIC SUN LIGHT REFLECTION & RAYS (EMERGES FROM BEHIND FRAME BUILDINGS)
               Placed at z-[5] BEHIND frameBg (z-10) so it emerges from behind the city
               skyline and smoothly ascends into the sky, settling at its resting position.
-              Mobile: Lowered down to bottom-[22%] right above horizon line; Desktop: bottom-[40.5%]
+              Mobile: Balanced at bottom-[31%]; Tablet: bottom-[35%]; Desktop: bottom-[40.5%]
               ========================================================================= */}
-          <div className="absolute left-1/2 bottom-[22%] sm:bottom-[32%] md:bottom-[40.5%] z-[5] pointer-events-none select-none flex items-center justify-center animate-sunrise-rise">
+          <div className="absolute left-1/2 bottom-[31%] sm:bottom-[35%] md:bottom-[40.5%] z-[5] pointer-events-none select-none flex items-center justify-center animate-sunrise-rise">
             {/* 1. Complete 360° Atmospheric Circular Sky Glow */}
             <div
               className="absolute w-[380px] sm:w-[480px] h-[380px] sm:h-[480px] rounded-full pointer-events-none animate-sun-pulse"
