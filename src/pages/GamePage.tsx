@@ -406,6 +406,7 @@ export const GamePage: React.FC = () => {
             onOpenStats={() => setShowStatsModal(true)}
             onOpenLogin={() => setShowLoginModal(true)}
             onOpenProfile={() => setShowProfileModal(true)}
+            onLogout={handleLogout}
             isLoggedIn={isLoggedIn}
             userId={currentUser?.u_id || currentUser?.id || 'ADMIN_123'}
             username={currentUser?.username || 'Admin'}
