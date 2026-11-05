@@ -22,6 +22,7 @@ interface FullscreenGameSceneProps {
   difficulty?: GameDifficulty;
   difficultyConfig?: Record<GameDifficulty, DifficultyApiConfig>;
   onStackSuccess: (level: number, multiplier: number, bonus: number) => void;
+  onBlockDrop?: (currentFloor: number, currentMultiplier: number) => void;
   onGameOver: (finalLevel: number, finalMultiplier: number) => void;
   onPerfectStack: () => void;
   buildTrigger: number;
@@ -32,6 +33,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
   difficulty = 'MEDIUM',
   difficultyConfig,
   onStackSuccess,
+  onBlockDrop,
   onGameOver,
   onPerfectStack,
   buildTrigger,
@@ -192,6 +194,9 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
     isPlacingRef.current = true;
     setIsDropping(true);
 
+    // Notify parent to emit socket stack_block event (Floor 1, 2, 3...)
+    onBlockDrop?.(currentLevel, currentMultiplier);
+
     let dropStartX = movingXRef.current;
     const dropStartTilt = movingTiltRef.current;
     const currentW = movingWidthRef.current;
@@ -199,7 +204,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
     const topPlacedLayer = layers[layers.length - 1];
 
     // Check if Admin Force Miss was triggered:
-    // The user will never suspect Admin intervention: when they press BUILD / spacebar,
+    // The user will never suspect Admin intervention: when they press BUILD / touch screen,
     // the block simply drops outside the safe landing line and naturally falls off like a standard missed drop!
     const isForcedMiss = isForceMissScheduledRef.current;
     if (isForcedMiss) {
@@ -268,7 +273,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
             0
           );
 
-          // Whole box tumbles and plummets down off the tower
+          // 1. Current block tumbles and plummets down off the tower
           const missDebris: FallingDebris = {
             id: `miss-${Date.now()}`,
             x: dropStartX,
@@ -278,18 +283,30 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
             direction: dropStartX > topPlacedLayer.x ? 'right' : 'left',
             image: currentCfg.img,
           };
-          setDebris([missDebris]);
+
+          // 2. Entire tower topples and collapses into debris
+          const towerToppleDebris: FallingDebris[] = layers.slice(1).map((l, idx) => ({
+            id: `tower-topple-${idx}-${Date.now()}`,
+            x: l.x,
+            bottom: currentStackHeight - idx * (isMobile ? 36 : 40),
+            width: l.width,
+            height: l.height,
+            direction: idx % 2 === 0 ? 'right' : 'left',
+            image: getObstacleForLevel(l.level, isMobile).img,
+          }));
+
+          setDebris([missDebris, ...towerToppleDebris]);
           setIsDropping(false);
           setFeedbackToast({
             text: 'MISSED!',
-            subtext: 'Block fell off the tower',
+            subtext: 'Tower toppled & collapsed',
             type: 'miss',
           });
 
           // Allow the user to visibly see the box tumble & fall before Game Over modal appears
           setTimeout(() => {
             onGameOver(Math.max(0, currentLevel - 1), 0);
-          }, 1150);
+          }, 1250);
           return;
         }
 
@@ -456,29 +473,27 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
     }
   }, [gameState]);
 
-  // Real-time Admin Force-Stop: Schedules an invisible, natural miss on next block drop
-  // Player never suspects admin intervention: block simply falls outside the safe landing margin
+  // 4. Game Over / Tower Topple Listener via Socket.IO
+  // Note: Agar admin panel se Force Stop dabaya jata hai, toh tower turant nahi girega;
+  // jab user agla block girane ke liye touch karega tabhi woh block miss hoke tower girega.
   useEffect(() => {
     const unsubscribe = socketService.onObstacleDropped((data) => {
       if (gameState !== 'PLAYING') return;
 
-      console.log('[Admin Control] Seamless force-miss scheduled for round:', data.round_id);
+      console.log('🔥 [Socket] obstacle_dropped event received:', data);
+      // Arm force miss for next touch/drop
       isForceMissScheduledRef.current = true;
 
-      // If user does not press BUILD within 2.5 seconds, auto-release block so it drops outside and misses naturally
-      const autoDropTimer = setTimeout(() => {
-        if (gameState === 'PLAYING' && !isPlacingRef.current && isForceMissScheduledRef.current) {
-          handleDropBlock();
-        }
-      }, 2500);
-
-      return () => clearTimeout(autoDropTimer);
+      // If data explicitly specifies immediate topple and a block is already dropping:
+      if (data.toppled && isPlacingRef.current) {
+        isForceMissScheduledRef.current = true;
+      }
     });
 
     return () => {
       unsubscribe();
     };
-  }, [gameState, handleDropBlock]);
+  }, [gameState]);
 
   // Master RAF loop for pendulum swing & crane winch descent
   useEffect(() => {
@@ -686,9 +701,9 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
       )}
 
 
-      {/* Camera Stage: Sits comfortably on mobile and slightly lowered on desktop */}
+      {/* Camera Stage: Sits firmly on the ground pavement on mobile and desktop */}
       <div
-        className="absolute inset-x-0 bottom-[204px] sm:bottom-46 md:bottom-[184px] flex flex-col items-center justify-end transition-transform duration-300 ease-out will-change-transform pointer-events-none"
+        className="absolute inset-x-0 bottom-[168px] sm:bottom-[176px] md:bottom-[184px] flex flex-col items-center justify-end transition-transform duration-300 ease-out will-change-transform pointer-events-none"
         style={{
           transform: `translate3d(0px, ${cameraY}px, 0px)`,
         }}

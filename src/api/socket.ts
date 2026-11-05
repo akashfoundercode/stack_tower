@@ -16,6 +16,7 @@ class SocketService {
   private socket: Socket | null = null;
   private isConnected: boolean = false;
   private currentRoundId: string | null = null;
+  private currentUserId: number | string = 1;
   private obstacleListeners: Array<(data: ObstacleDroppedData) => void> = [];
 
   constructor() {
@@ -30,12 +31,12 @@ class SocketService {
     try {
       this.socket = io(SOCKET_URL, {
         autoConnect: true,
-        // Start with HTTP polling handshake, then automatically upgrade to WebSocket when supported
-        transports: ['polling', 'websocket'],
+        // Preferred transports: WebSocket first, fallback to HTTP polling
+        transports: ['websocket', 'polling'],
         reconnection: true,
-        reconnectionAttempts: 3,
-        reconnectionDelay: 4000,
-        timeout: 6000,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 3000,
+        timeout: 10000,
       });
 
       this.socket.on('connect', () => {
@@ -48,9 +49,9 @@ class SocketService {
         console.log('[Socket] stack_tower_connected:', res);
       });
 
-      // 3. Instant Admin Force Stop / Obstacle Dropped Event
+      // 4. Game Over / Tower Topple / Obstacle Dropped Event
       this.socket.on('obstacle_dropped', (data: ObstacleDroppedData) => {
-        console.log('🔥 [Socket] INSTANT OBSTACLE DROPPED:', data);
+        console.log('🔥 [Socket] obstacle_dropped event received:', data);
         this.obstacleListeners.forEach((callback) => {
           try {
             callback(data);
@@ -80,8 +81,13 @@ class SocketService {
   /**
    * 2. Join active round room after placing bet
    */
-  public joinRound(round_id: string, userid: number | string = 1) {
+  public joinRound(
+    round_id: string,
+    userid: number | string = 1,
+    callback?: (res: any) => void
+  ) {
     this.currentRoundId = round_id;
+    this.currentUserId = userid;
     if (!this.socket) this.init();
 
     const payload: JoinRoundPayload = {
@@ -90,19 +96,29 @@ class SocketService {
     };
 
     if (this.socket) {
-      this.socket.emit('join_round', payload);
+      if (callback) {
+        this.socket.emit('join_round', payload, callback);
+      } else {
+        this.socket.emit('join_round', payload);
+      }
       console.log('[Socket] Emitted join_round:', payload);
     }
   }
 
   /**
-   * 4. Broadcast real-time tower level stack to server & spectators
+   * 3. Broadcast real-time block drop / level stack to server
    */
-  public emitStackBlock(round_id: string, level: number, multiplier: number) {
+  public emitStackBlock(
+    round_id: string,
+    level: number,
+    multiplier: number,
+    userid?: number | string
+  ) {
     if (!this.socket) this.init();
 
     const payload: StackBlockPayload = {
       round_id: round_id || this.currentRoundId || '',
+      userid: userid || this.currentUserId || 1,
       level,
       multiplier,
     };

@@ -231,7 +231,19 @@ export const GamePage: React.FC = () => {
       if (betData?.round_id) {
         setCurrentRoundId(betData.round_id);
         // Socket Step 2: Bet lagane ke baad room join karein with authenticated user
-        socketService.joinRound(betData.round_id, currentUser?.id || 15);
+        socketService.joinRound(
+          betData.round_id,
+          currentUser?.id || 1,
+          (res) => {
+            console.log('[Socket] join_round acknowledged:', res);
+            if (res?.current_level !== undefined) {
+              setCurrentLevel(res.current_level);
+            }
+            if (res?.multiplier !== undefined) {
+              setCurrentMultiplier(res.multiplier);
+            }
+          }
+        );
       }
       if (typeof betData?.wallet_balance === 'number') {
         setDemoBalance(betData.wallet_balance);
@@ -248,17 +260,28 @@ export const GamePage: React.FC = () => {
     }
   };
 
+  // 3. Block / Floor Drop karte waqt: User jab bhi screen touch karke block drop kare
+  const handleBlockDrop = useCallback(
+    (currentFloor: number, currentMult: number) => {
+      const nextFloor = currentFloor + 1;
+      socketService.emitStackBlock(
+        currentRoundId || '',
+        nextFloor,
+        currentMult,
+        currentUser?.id || 1
+      );
+    },
+    [currentRoundId, currentUser]
+  );
+
   // Stack success
   const handleStackSuccess = useCallback(
     (level: number, multiplier: number, bonusPoints: number) => {
       setCurrentLevel(level);
       setCurrentMultiplier(multiplier);
       setScore((prev) => prev + bonusPoints);
-
-      // Socket Step 4: Player ka real-time level update broadcast karne ke liye
-      socketService.emitStackBlock(currentRoundId || '', level, multiplier);
     },
-    [currentRoundId]
+    []
   );
 
   // Perfect stack
@@ -390,6 +413,7 @@ export const GamePage: React.FC = () => {
           difficulty={difficulty}
           difficultyConfig={gameConfig.difficulties}
           onStackSuccess={handleStackSuccess}
+          onBlockDrop={handleBlockDrop}
           onGameOver={handleGameOver}
           onPerfectStack={handlePerfectStack}
           buildTrigger={buildTrigger}

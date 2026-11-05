@@ -220,11 +220,12 @@ export type UserStatsResponse = ApiResponse<UserStatsData>;
 export interface ObstacleDroppedData {
   round_id: string;
   user_id?: number | string;
-  obstacle_dropped: boolean;
-  obstacle_type: 'WRECKING_BALL' | 'METEOR' | 'ANVIL' | 'ROCK' | 'BIRD' | string;
-  level_dropped: number;
-  status: 'OBSTACLE_DROPPED' | string;
-  payout: number;
+  toppled?: boolean;
+  obstacle_dropped?: boolean;
+  obstacle_type?: 'WRECKING_BALL' | 'METEOR' | 'ANVIL' | 'ROCK' | 'BIRD' | string;
+  level_dropped?: number;
+  status?: 'OBSTACLE_DROPPED' | 'LOST' | string;
+  payout?: number;
 }
 
 /**
@@ -240,6 +241,7 @@ export interface JoinRoundPayload {
  */
 export interface StackBlockPayload {
   round_id: string;
+  userid?: number | string;
   level: number;
   multiplier: number;
 }
