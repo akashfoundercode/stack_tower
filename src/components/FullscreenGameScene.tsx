@@ -134,7 +134,6 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
   // Winch-down descent function: Crane hook lowers the straight obstacle swiftly into view from ceiling
   const startWinchDown = useCallback(() => {
     setIsLowering(true);
-    isLoweringRef.current = true;
     setWinchY(-70);
     winchStartTimeRef.current = performance.now();
   }, []);
@@ -431,6 +430,9 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
 
         setIsDropping(false);
         setDropY(SWING_TOP);
+        isPlacingRef.current = false;
+        isLoweringRef.current = false;
+        setIsLowering(false);
 
         // Next floor obstacle lowers down gracefully from the top crane
         startWinchDown();
@@ -535,6 +537,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
           winchStartTimeRef.current = null;
           isLoweringRef.current = false;
           setIsLowering(false);
+          isPlacingRef.current = false;
         }
       }
 
