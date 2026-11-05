@@ -19,7 +19,7 @@ interface MovingBlockProps {
   winchY?: number; // vertical descent from top ceiling (starts negative, descends smoothly to 0)
 }
 
-export const MovingBlock: React.FC<MovingBlockProps> = ({
+const MovingBlockComponent: React.FC<MovingBlockProps> = ({
   x,
   width,
   height,
@@ -248,3 +248,5 @@ export const MovingBlock: React.FC<MovingBlockProps> = ({
     </div>
   );
 };
+
+export const MovingBlock = React.memo(MovingBlockComponent);

@@ -122,16 +122,20 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
   movingWidthRef.current = movingWidth;
   movingHeightRef.current = movingHeight;
 
-  // Winch-down descent function: Crane hook lowers the straight obstacle into view from ceiling
+  const currentLevelRef = useRef(currentLevel);
+  currentLevelRef.current = currentLevel;
+  const isMobileRef = useRef(isMobile);
+  isMobileRef.current = isMobile;
+  const difficultyRef = useRef(difficulty);
+  difficultyRef.current = difficulty;
+  const difficultyConfigRef = useRef(difficultyConfig);
+  difficultyConfigRef.current = difficultyConfig;
+
+  // Winch-down descent function: Crane hook lowers the straight obstacle swiftly into view from ceiling
   const startWinchDown = useCallback(() => {
     setIsLowering(true);
     isLoweringRef.current = true;
-    setWinchY(-135);
-    setMovingTilt(0);
-    movingTiltRef.current = 0;
-    setMovingX(0);
-    movingXRef.current = 0;
-    setHookX(0);
+    setWinchY(-70);
     winchStartTimeRef.current = performance.now();
   }, []);
 
@@ -499,60 +503,55 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
       return;
     }
 
-    // Dynamic progressive difficulty parameters based on current level & selected difficulty mode
-    const diffParams = getDifficultyParams(
-      currentLevel,
-      isMobile,
-      difficulty,
-      difficultyConfig?.[difficulty]
-    );
-    const SWEEP_TRAVEL = diffParams.sweepTravel; // Travel width across the tower
-    const MAX_SWING_ANGLE = diffParams.maxSwingAngle; // degrees dynamic pendulum tilt swing
-    const angularSpeed = diffParams.angularSpeed; // rad/s swing speed
-
     const updateFrame = (timestamp: number) => {
       if (!lastTimeRef.current) lastTimeRef.current = timestamp;
-      const delta = (timestamp - lastTimeRef.current) / 1000;
+      const rawDelta = (timestamp - lastTimeRef.current) / 1000;
       lastTimeRef.current = timestamp;
+      // Clamp delta between 0.001 and 0.033 to prevent sudden hitch jumps / GC stutter
+      const delta = Math.min(Math.max(rawDelta, 0.001), 0.033);
 
-      // 1. Crane smooth winch descent from top ceiling (guaranteed to complete, never freezes!)
+      // Dynamic progressive difficulty parameters evaluated seamlessly without cancelling RAF loop
+      const diffParams = getDifficultyParams(
+        currentLevelRef.current,
+        isMobileRef.current,
+        difficultyRef.current,
+        difficultyConfigRef.current?.[difficultyRef.current]
+      );
+      const SWEEP_TRAVEL = diffParams.sweepTravel;
+      const MAX_SWING_ANGLE = diffParams.maxSwingAngle;
+      const angularSpeed = diffParams.angularSpeed;
+
+      // 1. Crane smooth winch descent from top ceiling (visual vertical entry, does NOT freeze horizontal swing!)
       if (winchStartTimeRef.current !== null) {
         const elapsed = timestamp - winchStartTimeRef.current;
-        const WINCH_DURATION = 380; // ms smooth descent
+        const WINCH_DURATION = 200; // Snappy, fluid 200ms entry
         if (elapsed < WINCH_DURATION) {
           const progress = Math.min(1, elapsed / WINCH_DURATION);
-          const easeOut = 1 - Math.pow(1 - progress, 3);
-          const currentY = -135 + 135 * easeOut;
-          setWinchY(Math.round(currentY * 10) / 10);
-          setMovingTilt(0);
-          setMovingX(0);
-          setHookX(0);
-          movingTiltRef.current = 0;
-          movingXRef.current = 0;
+          const easeOut = 1 - Math.pow(1 - progress, 2);
+          const currentY = -70 * (1 - easeOut);
+          setWinchY(currentY);
         } else {
           setWinchY(0);
           winchStartTimeRef.current = null;
           isLoweringRef.current = false;
           setIsLowering(false);
-          isPlacingRef.current = false;
-          swingPhaseRef.current = 0;
         }
-      } else if (!isPlacingRef.current) {
-        // Normal pendulum swing across the screen
+      }
+
+      if (!isPlacingRef.current) {
+        // Continuous, uninterrupted pendulum swing across the screen (never stops in the middle!)
         swingPhaseRef.current += angularSpeed * delta;
         const currentTrolleyX = Math.sin(swingPhaseRef.current) * SWEEP_TRAVEL;
         const currentTilt = Math.sin(swingPhaseRef.current) * MAX_SWING_ANGLE;
         const currentArm = CABLE_LENGTH + movingHeightRef.current / 2;
         const pendulumX = Math.sin((currentTilt * Math.PI) / 180) * currentArm;
-        const totalX = Math.round((currentTrolleyX + pendulumX) * 10) / 10;
-        const roundedTilt = Math.round(currentTilt * 10) / 10;
-        const roundedHookX = Math.round(currentTrolleyX * 10) / 10;
+        const totalX = currentTrolleyX + pendulumX;
 
-        movingTiltRef.current = roundedTilt;
+        movingTiltRef.current = currentTilt;
         movingXRef.current = totalX;
-        setMovingTilt(roundedTilt);
+        setMovingTilt(currentTilt);
         setMovingX(totalX);
-        setHookX(roundedHookX);
+        setHookX(currentTrolleyX);
       }
       animFrameRef.current = requestAnimationFrame(updateFrame);
     };
@@ -568,7 +567,7 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
         cancelAnimationFrame(dropAnimRef.current);
       }
     };
-  }, [gameState, currentLevel, isMobile, difficulty]);
+  }, [gameState]);
 
   const activeTheme = COLOR_THEMES[currentLevel % COLOR_THEMES.length];
 

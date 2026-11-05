@@ -291,31 +291,34 @@ class SoundManager {
 
   speak(text: string, options?: { rate?: number; pitch?: number; volume?: number }) {
     if (!this.enabled || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-    try {
-      if (window.speechSynthesis.speaking) {
-        window.speechSynthesis.cancel();
-      }
+    // Execute speech synthesis asynchronously in next tick so it never blocks the 60fps RAF loop
+    setTimeout(() => {
+      try {
+        if (window.speechSynthesis.speaking) {
+          window.speechSynthesis.cancel();
+        }
 
-      const voice = this.femaleVoice || this.initFemaleVoice();
-      if (voice) {
-        this.femaleVoice = voice;
-      }
+        const voice = this.femaleVoice || this.initFemaleVoice();
+        if (voice) {
+          this.femaleVoice = voice;
+        }
 
-      const utterance = new SpeechSynthesisUtterance(text);
-      if (voice) {
-        utterance.voice = voice;
-        utterance.lang = voice.lang;
-      } else {
-        utterance.lang = 'en-US';
-      }
+        const utterance = new SpeechSynthesisUtterance(text);
+        if (voice) {
+          utterance.voice = voice;
+          utterance.lang = voice.lang;
+        } else {
+          utterance.lang = 'en-US';
+        }
 
-      // Bright, cheerful female arcade hostess pitch
-      utterance.pitch = options?.pitch ?? 1.3;
-      utterance.rate = options?.rate ?? 1.05;
-      utterance.volume = options?.volume ?? 1.0;
+        // Bright, cheerful female arcade hostess pitch
+        utterance.pitch = options?.pitch ?? 1.3;
+        utterance.rate = options?.rate ?? 1.05;
+        utterance.volume = options?.volume ?? 1.0;
 
-      window.speechSynthesis.speak(utterance);
-    } catch {}
+        window.speechSynthesis.speak(utterance);
+      } catch {}
+    }, 16);
   }
 }
 
