@@ -273,7 +273,8 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
             0
           );
 
-          // 1. Current block tumbles and plummets down off the tower
+          // Normal miss: Only the dropped block slips off the edge and falls down
+          // No tower exploding or breaking apart ("phatne phutne wala system nahi")
           const missDebris: FallingDebris = {
             id: `miss-${Date.now()}`,
             x: dropStartX,
@@ -284,29 +285,18 @@ export const FullscreenGameScene: React.FC<FullscreenGameSceneProps> = ({
             image: currentCfg.img,
           };
 
-          // 2. Entire tower topples and collapses into debris
-          const towerToppleDebris: FallingDebris[] = layers.slice(1).map((l, idx) => ({
-            id: `tower-topple-${idx}-${Date.now()}`,
-            x: l.x,
-            bottom: currentStackHeight - idx * (isMobile ? 36 : 40),
-            width: l.width,
-            height: l.height,
-            direction: idx % 2 === 0 ? 'right' : 'left',
-            image: getObstacleForLevel(l.level, isMobile).img,
-          }));
-
-          setDebris([missDebris, ...towerToppleDebris]);
+          setDebris([missDebris]);
           setIsDropping(false);
           setFeedbackToast({
             text: 'MISSED!',
-            subtext: 'Tower toppled & collapsed',
+            subtext: 'Block fell off the tower',
             type: 'miss',
           });
 
           // Allow the user to visibly see the box tumble & fall before Game Over modal appears
           setTimeout(() => {
             onGameOver(Math.max(0, currentLevel - 1), 0);
-          }, 1250);
+          }, 1150);
           return;
         }
 
